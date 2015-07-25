@@ -157,6 +157,10 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
     struct arch_regs *regs = (struct arch_regs *)current_regs;
     uint32_t cpu = smp_processor_id();
 
+    if(cpu) {
+    	printH("second cpu isr.\n");
+    	return ;
+    }
 
     if (irq < MAX_IRQS) {
         if (interrupt_check_guest_irq(irq) == GUEST_IRQ) {

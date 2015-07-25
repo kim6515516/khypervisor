@@ -15,6 +15,9 @@
 #ifndef _SMP_
 #define VGIC_SIMULATE_HWVIRQ
 #endif
+#ifndef _CPUISOLATED_
+#define VGIC_SIMULATE_HWVIRQ
+#endif
 
 #ifdef __VGIC_DISABLE_TRACE__
 #ifdef HVMM_TRACE_ENTER

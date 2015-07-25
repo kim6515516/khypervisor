@@ -89,7 +89,23 @@ static struct memmap_desc guest3_device_md[] = {
     {0, 0, 0, 0, 0}
 };
 #endif
+#if _CPUISOLATED_
+static struct memmap_desc guest2_device_md[] = {
+    { "uart", 0x1C090000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
+    { "sp804", 0x1C110000, 0x1C120000, SZ_4K, MEMATTR_DM },
+    { "gicc", 0x2C000000 | GIC_OFFSET_GICC,
+       CFG_GIC_BASE_PA | GIC_OFFSET_GICVI, SZ_8K, MEMATTR_DM },
+    {0, 0, 0, 0, 0}
+};
 
+static struct memmap_desc guest3_device_md[] = {
+    { "uart", 0x1C090000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
+    { "sp804", 0x1C110000, 0x1C120000, SZ_4K, MEMATTR_DM },
+    { "gicc", 0x2C000000 | GIC_OFFSET_GICC,
+       CFG_GIC_BASE_PA | GIC_OFFSET_GICVI, SZ_8K, MEMATTR_DM },
+    {0, 0, 0, 0, 0}
+};
+#endif
 /**
  * @brief Memory map for guest 0.
  */
@@ -134,7 +150,29 @@ static struct memmap_desc guest3_memory_md[] = {
     {0, 0, 0, 0,  0},
 };
 #endif
+#if _CPUISOLATED_
+/**
+ * @brief Memory map for guest 2.
+ */
+static struct memmap_desc guest2_memory_md[] = {
+    /* 256MB */
+    {"start", 0x00000000, 0, 0x10000000,
+     MEMATTR_NORMAL_OWB | MEMATTR_NORMAL_IWB
+    },
+    {0, 0, 0, 0,  0},
+};
 
+/**
+ * @brief Memory map for guest 3.
+ */
+static struct memmap_desc guest3_memory_md[] = {
+    /* 256MB */
+    {"start", 0x00000000, 0, 0x10000000,
+     MEMATTR_NORMAL_OWB | MEMATTR_NORMAL_IWB
+    },
+    {0, 0, 0, 0,  0},
+};
+#endif
 /* Memory Map for Guest 0 */
 static struct memmap_desc *guest0_mdlist[] = {
     guest0_device_md,   /* 0x0000_0000 */
@@ -172,7 +210,25 @@ static struct memmap_desc *guest3_mdlist[] = {
     0
 };
 #endif
+#if _CPUISOLATED_
+/* Memory Map for Guest 2 */
+static struct memmap_desc *guest2_mdlist[] = {
+    guest2_device_md,
+    guest_md_empty,
+    guest2_memory_md,
+    guest_md_empty,
+    0
+};
 
+/* Memory Map for Guest 3 */
+static struct memmap_desc *guest3_mdlist[] = {
+    guest3_device_md,
+    guest_md_empty,
+    guest3_memory_md,
+    guest_md_empty,
+    0
+};
+#endif
 /** @}*/
 
 static uint32_t _timer_irq;
@@ -251,6 +307,10 @@ void setup_memory()
     guest2_memory_md[0].pa = (uint64_t)((uint32_t) &_guest2_bin_start);
     guest3_memory_md[0].pa = (uint64_t)((uint32_t) &_guest3_bin_start);
 #endif
+#if _CPUISOLATED_
+    guest2_memory_md[0].pa = (uint64_t)((uint32_t) &_guest2_bin_start);
+    guest3_memory_md[0].pa = (uint64_t)((uint32_t) &_guest3_bin_start);
+#endif
 }
 
 /** @brief Registers generic timer irqs such as hypervisor timer event
@@ -293,7 +353,10 @@ int main_cpu_init()
     printH("wake up...other CPUs\n");
     secondary_smp_pen = 1;
 #endif
-
+#ifdef _CPUISOLATED_
+    printH("wake up...other CPUs\n");
+    secondary_smp_pen = 1;
+#endif
     /* Initialize Timer */
     setup_timer();
     if (timer_init(_timer_irq))
@@ -361,10 +424,55 @@ void secondary_cpu_init(uint32_t cpu)
 }
 
 #endif
+#ifdef _CPUISOLATED_
 
+void secondary_cpu_init(uint32_t cpu)
+{
+    if (cpu >= CFG_NUMBER_OF_CPUS)
+        hyp_abort_infinite();
+
+    init_print();
+    printH("[%s : %d] Starting...CPU : #%d\n", __func__, __LINE__, cpu);
+
+    /* Initialize Memory Management */
+    if (memory_init(guest2_mdlist, guest3_mdlist))
+        printh("[start_guest] virtual memory initialization failed...\n");
+
+    /* Initialize Interrupt Management */
+    if (interrupt_init(_guest_virqmap))
+        printh("[start_guest] interrupt initialization failed...\n");
+
+    /* Initialize Timer */
+    if (timer_init(_timer_irq))
+        printh("[start_guest] timer initialization failed...\n");
+
+    /* Initialize Guests */
+    if (guest_init())
+        printh("[start_guest] guest initialization failed...\n");
+
+//    /* Initialize Virtual Devices */
+//    if (vdev_init())
+//        printh("[start_guest] virtual device initialization failed...\n");
+
+    /* Switch to the first guest */
+    guest_sched_start();
+
+    /* The code flow must not reach here */
+    printh("[hyp_main] ERROR: CODE MUST NOT REACH HERE\n");
+    hyp_abort_infinite();
+}
+
+#endif
 int main(void)
 {
 #ifdef _SMP_
+    uint32_t cpu = smp_processor_id();
+
+    if (cpu)
+        secondary_cpu_init(cpu);
+    else
+#endif
+#ifdef _CPUISOLATED_
     uint32_t cpu = smp_processor_id();
 
     if (cpu)

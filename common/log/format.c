@@ -3,7 +3,9 @@
 #ifdef _SMP_
 #include "smp.h"
 #endif
-
+#ifdef _CPUISOLATED_
+#include "smp.h"
+#endif
 #define PRINT_BUF_LEN   12
 
 enum numerical {
@@ -17,7 +19,9 @@ static format_putc_t format_putc;
 #ifdef _SMP_
 static DEFINE_SPINLOCK(format_lock);
 #endif
-
+#ifdef _CPUISOLATED_
+static DEFINE_SPINLOCK(format_lock);
+#endif
 static void format_printi(uint32_t v, enum numerical numerical, char base)
 {
     char print_buf[PRINT_BUF_LEN];
@@ -59,6 +63,9 @@ int format_print(const char *format, __builtin_va_list ap)
 #ifdef _SMP_
     smp_spin_lock(&format_lock, flags);
 #endif
+#ifdef _CPUISOLATED_
+    smp_spin_lock(&format_lock, flags);
+#endif
     for (p = format; *p != '\0'; p++) {
         if (*p == '%') {
             ++p;
@@ -83,7 +90,9 @@ int format_print(const char *format, __builtin_va_list ap)
 #ifdef _SMP_
     smp_spin_unlock(&format_lock, flags);
 #endif
-
+#ifdef _CPUISOLATED_
+    smp_spin_unlock(&format_lock, flags);
+#endif
     return 0;
 }
 

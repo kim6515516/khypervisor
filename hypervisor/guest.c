@@ -13,12 +13,12 @@
 #define _valid_vmid(vmid) \
     (guest_first_vmid() <= vmid && guest_last_vmid() >= vmid)
 
-static struct guest_struct guests[NUM_GUESTS_STATIC];
-static int _current_guest_vmid[NUM_CPUS] = {VMID_INVALID, VMID_INVALID};
-static int _next_guest_vmid[NUM_CPUS] = {VMID_INVALID, };
-struct guest_struct *_current_guest[NUM_CPUS];
+static struct guest_struct guests[4];
+static int _current_guest_vmid[4] = {VMID_INVALID, VMID_INVALID};
+static int _next_guest_vmid[4] = {VMID_INVALID, };
+struct guest_struct *_current_guest[4];
 /* further switch request will be ignored if set */
-static uint8_t _switch_locked[NUM_CPUS];
+static uint8_t _switch_locked[4];
 
 static hvmm_status_t guest_save(struct guest_struct *guest,
                         struct arch_regs *regs)
@@ -115,7 +115,11 @@ void guest_sched_start(void)
     /* Select the first guest context to switch to. */
     _current_guest_vmid[cpu] = VMID_INVALID;
     if (cpu)
-        guest = &guests[num_of_guest(cpu - 1) + 0];
+#ifdef _CPUISOLATED_
+        guest = &guests[cpu];
+#else
+    	guest = &guests[num_of_guest(cpu - 1) + 0];
+#endif
     else
         guest = &guests[0];
     /* guest_hw_dump */
@@ -124,8 +128,12 @@ void guest_sched_start(void)
     /* Context Switch with current context == none */
 
     if (cpu) {
-        guest_switchto(2, 0);
 
+#ifdef _CPUISOLATED_
+    	guest_switchto(cpu, 0);
+#else
+        guest_switchto(2, 0);
+#endif
         guest_perform_switch(&guest->regs);
     } else {
         guest_switchto(0, 0);
@@ -136,7 +144,9 @@ void guest_sched_start(void)
 vmid_t guest_first_vmid(void)
 {
     uint32_t cpu = smp_processor_id();
-
+#ifdef _CPUISOLATED_
+    return cpu;
+#endif
     /* FIXME:Hardcoded for now */
     if (cpu)
         return 2;
@@ -147,7 +157,9 @@ vmid_t guest_first_vmid(void)
 vmid_t guest_last_vmid(void)
 {
     uint32_t cpu = smp_processor_id();
-
+#ifdef _CPUISOLATED_
+    return cpu;
+#endif
     /* FIXME:Hardcoded for now */
     if (cpu)
         return 3;
@@ -158,9 +170,13 @@ vmid_t guest_last_vmid(void)
 vmid_t guest_next_vmid(vmid_t ofvmid)
 {
     vmid_t next = VMID_INVALID;
-#ifdef _SMP_
-    uint32_t cpu = smp_processor_id();
 
+    uint32_t cpu = smp_processor_id();
+#ifdef _CPUISOLATED_
+    return cpu;
+#endif
+
+#ifdef _SMP_
     if (cpu)
         return 2;
     else
@@ -272,15 +288,19 @@ hvmm_status_t guest_init()
     uint32_t cpu = smp_processor_id();
     printh("[hyp] init_guests: enter\n");
     /* Initializes 2 guests */
-    guest_count = num_of_guest(cpu);
+    guest_count = 4; //num_of_guest(cpu);
 
-
+#ifdef _CPUISOLATED_
+    if (cpu)
+    	start_vmid = cpu;
+#else
     if (cpu)
         start_vmid = num_of_guest(cpu - 1);
     else
         start_vmid = 0;
+#endif
 
-    guest_count += start_vmid;
+//    guest_count += start_vmid;
 
     for (i = start_vmid; i < guest_count; i++) {
         /* Guest i @guest_bin_start */

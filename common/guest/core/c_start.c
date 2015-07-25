@@ -30,7 +30,9 @@
 #ifdef _SMP_
 #include <smp.h>
 #endif
-
+#ifdef _CPUISOLATED_
+#include <smp.h>
+#endif
 /* #define TESTS_ENABLE_VDEV_SAMPLE */
 
 #ifdef __MONITOR_CALL_HVC__
@@ -59,6 +61,9 @@ void nrm_loop(void)
 {
     int i = 0;
 #if _SMP_
+    uint32_t cpu = smp_processor_id();
+#endif
+#if _CPUISOLATED_
     uint32_t cpu = smp_processor_id();
 #endif
     uart_init();

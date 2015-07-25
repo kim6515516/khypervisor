@@ -11,7 +11,7 @@
 #define CFG_UART1         0x1C0A0000
 #define CFG_UART0         0x1C090000
 
-#define CFG_NUMBER_OF_CPUS  2
+
 
 #define MON_SIZE            0x0F000000
 #define MON_STACK_SIZE      0x00C00000
@@ -28,14 +28,37 @@
 #define CFG_MACHINE_NUMBER 2272
 
 #define USEC 1000000
+
 #ifdef _SMP_
 #define NUM_GUESTS_STATIC       4
+#define NUM_CPUS       4
+#define NUM_GUESTS_CPU0_STATIC       4
+#define NUM_GUESTS_CPU1_STATIC       4
+#define CFG_NUMBER_OF_CPUS  4
 #else
 #define NUM_GUESTS_STATIC       2
-#endif
+#define NUM_CPUS       2
 #define NUM_GUESTS_CPU0_STATIC       2
 #define NUM_GUESTS_CPU1_STATIC       2
+#define CFG_NUMBER_OF_CPUS  2
+#endif
+
+#ifdef _CPUISOLATED_
+#define NUM_GUESTS_STATIC       4
+#define NUM_CPUS       4
+#define NUM_GUESTS_CPU0_STATIC       4
+#define NUM_GUESTS_CPU1_STATIC       4
+#define CFG_NUMBER_OF_CPUS  4
+#else
+#define NUM_GUESTS_STATIC       2
 #define NUM_CPUS       2
+#define NUM_GUESTS_CPU0_STATIC       2
+#define NUM_GUESTS_CPU1_STATIC       2
+#define CFG_NUMBER_OF_CPUS  2
+#endif
+
+
+
 #define COUNT_PER_USEC (CFG_CNTFRQ/USEC)
 #define GUEST_SCHED_TICK 1000
 #define MAX_IRQS 1024
