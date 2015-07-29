@@ -43,7 +43,7 @@ static hvmm_status_t guest_restore(struct guest_struct *guest,
 }
 
 
-static hvmm_status_t perform_switch(struct arch_regs *regs, vmid_t next_vmid)
+hvmm_status_t perform_switch(struct arch_regs *regs, vmid_t next_vmid)
 {
     /* _curreng_guest_vmid -> next_vmid */
 
@@ -74,6 +74,32 @@ static hvmm_status_t perform_switch(struct arch_regs *regs, vmid_t next_vmid)
     interrupt_restore(_current_guest_vmid[cpu]);
     memory_restore(_current_guest_vmid[cpu]);
     guest_restore(guest, regs);
+
+    return result;
+}
+
+hvmm_status_t perform_switch_forced2(struct guest_struct *guest, vmid_t next_vmid)
+{
+    /* _curreng_guest_vmid -> next_vmid */
+
+    hvmm_status_t result = HVMM_STATUS_SUCCESS;
+    vdev_restore(0);
+    interrupt_restore(0);
+    memory_restore(0);
+    guest_restore(guest, 0);
+
+    return result;
+}
+
+hvmm_status_t perform_switch_forced(struct arch_regs *regs, vmid_t next_vmid)
+{
+    /* _curreng_guest_vmid -> next_vmid */
+
+    hvmm_status_t result = HVMM_STATUS_SUCCESS;
+    vdev_restore(0);
+    interrupt_restore(0);
+    memory_restore(0);
+    guest_restore(regs, 0);
 
     return result;
 }
@@ -205,9 +231,10 @@ vmid_t guest_waiting_vmid(void)
     return _next_guest_vmid[cpu];
 }
 
-void guest_dump_regs(struct arch_regs *regs)
+void guest_dump_regs(struct arch_regs *regs, char *name)
 {
     /* guest_hw_dump */
+	printH("Called func: %s\n",name);
     _guest_module.ops->dump(GUEST_VERBOSE_ALL, regs);
 }
 
@@ -330,6 +357,11 @@ struct guest_struct get_guest(uint32_t guest_num)
 {
    return guests[guest_num];
 }
+struct guest_struct* get_guest_pointer(uint32_t guest_num)
+{
+   return &guests[guest_num];
+}
+
 
 void guest_copy(struct guest_struct *dst, vmid_t vmid_src)
 {

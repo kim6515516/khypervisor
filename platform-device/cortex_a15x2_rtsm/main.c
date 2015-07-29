@@ -56,11 +56,14 @@ static struct memmap_desc guest0_device_md[] = {
     { "v2m_timer23", 0x1C120000, 0x1C120000, SZ_4K, MEMATTR_DM },
     { "rtc", 0x1C170000, 0x1C170000, SZ_4K, MEMATTR_DM },
     { "clcd", 0x1C1F0000, 0x1C1F0000, SZ_4K, MEMATTR_DM },
-    { "gicc", CFG_GIC_BASE_PA | GIC_OFFSET_GICC,
-            CFG_GIC_BASE_PA | GIC_OFFSET_GICVI, SZ_8K,
-            MEMATTR_DM },
+//    { "gicc", CFG_GIC_BASE_PA | GIC_OFFSET_GICC,
+//            CFG_GIC_BASE_PA | GIC_OFFSET_GICVI, SZ_8K,
+//            MEMATTR_DM },
     { "SMSC91c111i", 0x1A000000, 0x1A000000, SZ_16M, MEMATTR_DM },
     { "simplebus2", 0x18000000, 0x18000000, SZ_64M, MEMATTR_DM },
+    { "simplebus2", 0x00160000, 0x00160000, SZ_64M, MEMATTR_DM },
+    { "q", 0x00000000, 0x00000000, SZ_64M, MEMATTR_DM },
+    { "b", 0xFFFF0000, 0xFFFF0000, SZ_64M, MEMATTR_DM },
     { 0, 0, 0, 0, 0 }
 };
 
@@ -91,19 +94,37 @@ static struct memmap_desc guest3_device_md[] = {
 #endif
 #if _CPUISOLATED_
 static struct memmap_desc guest2_device_md[] = {
-    { "uart", 0x1C090000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
-    { "sp804", 0x1C110000, 0x1C120000, SZ_4K, MEMATTR_DM },
-    { "gicc", 0x2C000000 | GIC_OFFSET_GICC,
-       CFG_GIC_BASE_PA | GIC_OFFSET_GICVI, SZ_8K, MEMATTR_DM },
-    {0, 0, 0, 0, 0}
+	    { "sysreg", 0x1C010000, 0x1C010000, SZ_4K, MEMATTR_DM },
+	    { "sysctl", 0x1C020000, 0x1C020000, SZ_4K, MEMATTR_DM },
+	    { "aaci", 0x1C040000, 0x1C040000, SZ_4K, MEMATTR_DM },
+	    { "mmci", 0x1C050000, 0x1C050000, SZ_4K, MEMATTR_DM },
+	    { "kmi", 0x1C060000, 0x1C060000,  SZ_64K, MEMATTR_DM },
+	    { "kmi2", 0x1C070000, 0x1C070000, SZ_64K, MEMATTR_DM },
+	    { "v2m_serial0", 0x1C090000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
+	    { "v2m_serial1", 0x1C0A0000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
+	    { "v2m_serial2", 0x1C0B0000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
+	    { "v2m_serial3", 0x1C0C0000, 0x1C0C0000, SZ_4K, MEMATTR_DM },
+	    { "wdt", 0x1C0F0000, 0x1C0F0000, SZ_4K, MEMATTR_DM },
+	    { "v2m_timer01(sp804)", 0x1C110000, 0x1C110000, SZ_4K,
+	            MEMATTR_DM },
+	    { "v2m_timer23", 0x1C120000, 0x1C120000, SZ_4K, MEMATTR_DM },
+	    { "rtc", 0x1C170000, 0x1C170000, SZ_4K, MEMATTR_DM },
+	    { "clcd", 0x1C1F0000, 0x1C1F0000, SZ_4K, MEMATTR_DM },
+	    { "gicc", CFG_GIC_BASE_PA | GIC_OFFSET_GICC,
+	            CFG_GIC_BASE_PA | GIC_OFFSET_GICVI, SZ_8K,
+	            MEMATTR_DM },
+	    { "SMSC91c111i", 0x1A000000, 0x1A000000, SZ_16M, MEMATTR_DM },
+	    { "simplebus2", 0x18000000, 0x18000000, SZ_64M, MEMATTR_DM },
+
+	    { 0, 0, 0, 0, 0 }
 };
 
 static struct memmap_desc guest3_device_md[] = {
-    { "uart", 0x1C090000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
-    { "sp804", 0x1C110000, 0x1C120000, SZ_4K, MEMATTR_DM },
-    { "gicc", 0x2C000000 | GIC_OFFSET_GICC,
-       CFG_GIC_BASE_PA | GIC_OFFSET_GICVI, SZ_8K, MEMATTR_DM },
-    {0, 0, 0, 0, 0}
+	    { "uart", 0x1C090000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
+	    { "sp804", 0x1C110000, 0x1C120000, SZ_4K, MEMATTR_DM },
+	    { "gicc", 0x2C000000 | GIC_OFFSET_GICC,
+	       CFG_GIC_BASE_PA | GIC_OFFSET_GICVI, SZ_8K, MEMATTR_DM },
+	    {0, 0, 0, 0, 0}
 };
 #endif
 /**
@@ -292,6 +313,34 @@ void setup_interrupt()
     DECLARE_VIRQMAP(_guest_virqmap, 0, 46, 46);
     DECLARE_VIRQMAP(_guest_virqmap, 0, 47, 47);
     DECLARE_VIRQMAP(_guest_virqmap, 0, 69, 69);
+
+
+
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 1, 1);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 16, 16);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 17, 17);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 18, 18);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 19, 19);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 31, 31);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 32, 32);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 33, 33);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 34, 34);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 35, 35);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 36, 36);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 37, 38);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 38, 37);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 39, 37);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 40, 37);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 48, 37);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 41, 41);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 42, 42);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 43, 43);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 44, 44);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 45, 45);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 46, 46);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 47, 47);
+    DECLARE_VIRQMAP(_guest_virqmap, 2, 69, 69);
+
 }
 
 void setup_memory()
@@ -371,7 +420,7 @@ int main_cpu_init()
         printh("[start_guest] virtual device initialization failed...\n");
 
     /* Begin running test code for newly implemented features */
-    if (basic_tests_run(PLATFORM_BASIC_TESTS))
+    if (basic_tests_run(TESTS_ENABLE_GIC_TIMER))
         printh("[start_guest] basic testing failed...\n");
 
     /* Print Banner */
@@ -428,7 +477,7 @@ void secondary_cpu_init(uint32_t cpu)
 
 void secondary_cpu_init(uint32_t cpu)
 {
-    if (cpu >= CFG_NUMBER_OF_CPUS)
+    if (cpu >= 1)
         hyp_abort_infinite();
 
     init_print();
@@ -453,7 +502,9 @@ void secondary_cpu_init(uint32_t cpu)
 //    /* Initialize Virtual Devices */
 //    if (vdev_init())
 //        printh("[start_guest] virtual device initialization failed...\n");
-
+    /* Begin running test code for newly implemented features */
+    if (basic_tests_run(TESTS_ENABLE_GIC_TIMER))
+        printh("[start_guest] basic testing failed...\n");
     /* Switch to the first guest */
     guest_sched_start();
 

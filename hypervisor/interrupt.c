@@ -5,6 +5,8 @@
 #include <log/uart_print.h>
 #include <interrupt.h>
 #include <smp.h>
+#include <guest.h>
+
 
 #define VIRQ_MIN_VALID_PIRQ 16
 #define VIRQ_NUM_MAX_PIRQS  MAX_IRQS
@@ -152,10 +154,126 @@ static void interrupt_inject_enabled_guest(int num_of_guests, uint32_t irq)
     }
 }
 
+static void context_save_banked(struct regs_banked *regs_banked)
+{
+    /* USR banked register */
+    asm volatile(" mrs     %0, sp_usr\n\t"
+                 : "=r"(regs_banked->sp_usr) : : "memory", "cc");
+    /* SVC banked register */
+    asm volatile(" mrs     %0, spsr_svc\n\t"
+                 : "=r"(regs_banked->spsr_svc) : : "memory", "cc");
+    asm volatile(" mrs     %0, sp_svc\n\t"
+                 : "=r"(regs_banked->sp_svc) : : "memory", "cc");
+    asm volatile(" mrs     %0, lr_svc\n\t"
+                 : "=r"(regs_banked->lr_svc) : : "memory", "cc");
+    /* ABT banked register */
+    asm volatile(" mrs     %0, spsr_abt\n\t"
+                 : "=r"(regs_banked->spsr_abt) : : "memory", "cc");
+    asm volatile(" mrs     %0, sp_abt\n\t"
+                 : "=r"(regs_banked->sp_abt) : : "memory", "cc");
+    asm volatile(" mrs     %0, lr_abt\n\t"
+                 : "=r"(regs_banked->lr_abt) : : "memory", "cc");
+    /* UND banked register */
+    asm volatile(" mrs     %0, spsr_und\n\t"
+                 : "=r"(regs_banked->spsr_und) : : "memory", "cc");
+    asm volatile(" mrs     %0, sp_und\n\t"
+                 : "=r"(regs_banked->sp_und) : : "memory", "cc");
+    asm volatile(" mrs     %0, lr_und\n\t"
+                 : "=r"(regs_banked->lr_und) : : "memory", "cc");
+    /* IRQ banked register */
+    asm volatile(" mrs     %0, spsr_irq\n\t"
+                 : "=r"(regs_banked->spsr_irq) : : "memory", "cc");
+    asm volatile(" mrs     %0, sp_irq\n\t"
+                 : "=r"(regs_banked->sp_irq) : : "memory", "cc");
+    asm volatile(" mrs     %0, lr_irq\n\t"
+                 : "=r"(regs_banked->lr_irq) : : "memory", "cc");
+    /* FIQ banked register  R8_fiq ~ R12_fiq, LR and SPSR */
+    asm volatile(" mrs     %0, spsr_fiq\n\t"
+                 : "=r"(regs_banked->spsr_fiq) : : "memory", "cc");
+    asm volatile(" mrs     %0, lr_fiq\n\t"
+                 : "=r"(regs_banked->lr_fiq) : : "memory", "cc");
+    asm volatile(" mrs     %0, r8_fiq\n\t"
+                 : "=r"(regs_banked->r8_fiq) : : "memory", "cc");
+    asm volatile(" mrs     %0, r9_fiq\n\t"
+                 : "=r"(regs_banked->r9_fiq) : : "memory", "cc");
+    asm volatile(" mrs     %0, r10_fiq\n\t"
+                 : "=r"(regs_banked->r10_fiq) : : "memory", "cc");
+    asm volatile(" mrs     %0, r11_fiq\n\t"
+                 : "=r"(regs_banked->r11_fiq) : : "memory", "cc");
+    asm volatile(" mrs     %0, r12_fiq\n\t"
+                 : "=r"(regs_banked->r12_fiq) : : "memory", "cc");
+}
+static struct guest_struct target;
+void changeGuestMode(int irq, void *current_regs)
+{
+	struct arch_regs *regs = (struct arch_regs *)current_regs;
+    int i = 0;
+	hvmm_status_t ret = HVMM_STATUS_SUCCESS;
+    guest_hw_dump_extern(0x4, current_regs);
+    printH("changeGuest mode IRQ : %d\n", irq);
+    uint32_t lr, sp;
+
+    context_save_banked(&target.context);
+    target.vmid = 0;
+    target.regs.lr = regs->lr;
+    target.regs.pc = regs->pc;
+    target.regs.cpsr = regs->cpsr;
+
+    for (i=0; i<ARCH_REGS_NUM_GPR; i++) {
+    	target.regs.gpr[i] = regs->gpr[i];
+    }
+//    printH("start!!\n");
+//    printH("show sp's %x \n", target->context.regs_banked.sp_usr);
+//    printH("show sp's %x \n", target->context.regs_banked.sp_abt);
+//    printH("show sp's %x \n", target->context.regs_banked.sp_und);
+//    printH("show sp's %x \n", target->context.regs_banked.sp_irq);
+//
+//    asm volatile(" mrs     %0, sp_svc\n\t" : "=r"(sp) : : "memory", "cc");
+//    printH("show sp's %x \n", sp);
+//    asm volatile(" mrs     %0, sp_usr\n\t" : "=r"(sp) : : "memory", "cc");
+//    printH("show sp's %x \n", sp);
+//    printH("end!!\n");
+
+
+    target.context.regs_banked.spsr_irq = target.regs.cpsr;
+    target.regs.cpsr = target.regs.cpsr & ~(0x1 << 5);
+    target.regs.cpsr = target.regs.cpsr | (0x1 << 7);
+//    target->regs.cpsr = target->regs.cpsr & ~(0x1F);
+    printH("changeGuest before_cpsr : %x\n", target.regs.cpsr);
+    target.regs.cpsr = target.regs.cpsr & ~(0x1F);
+    target.regs.cpsr = target.regs.cpsr | 0x12;
+    printH("changeGuest after_cpsr : %x\n", target.regs.cpsr);
+    printH("changeGuest before_pc : %x\n", target.regs.pc);
+    target.context.regs_banked.lr_irq = target.regs.pc - 0x4;
+    target.regs.pc = 0xffff0018;
+//    target->regs.gpr[13] = 0x80B55FA8;
+    target.regs.lr = target.regs.pc - 4;
+//    target->regs.pc = 0x8000DA00;
+    printH("changeGuest after_pc : %x\n", target.regs.pc);
+    printH("changeGuest cpsr : %x\n", target.regs.cpsr);
+//    _guest_ops->end(irq);
+//    guest_switchto(0, 0);
+
+    volatile int *addr;
+    addr = (0x2C002000 + 0x20);
+//    *addr = 34;
+    printH("changeGuest iar : %x\n", *addr);
+    printH("changeGuest end.\n");
+    perform_switch_forced2(&target, 0);
+//    _mon_switch_to_guest_context(&target->regs);
+}
 void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 {
     struct arch_regs *regs = (struct arch_regs *)current_regs;
     uint32_t cpu = smp_processor_id();
+
+    if(irq != 26 && irq !=30) {
+    // 	_guest_ops->end(irq);
+    	changeGuestMode(irq, current_regs) ;
+    	return;
+    }
+
+//    printH("isr IRQ : %d\n", irq);
 
     if(cpu) {
     	printH("second cpu isr.\n");
@@ -242,11 +360,11 @@ hvmm_status_t interrupt_init(struct guest_virqmap *virqmap)
     }
 
     /* guest_interrupt_init() */
-    if (_guest_ops->init) {
-        ret = _guest_ops->init();
-        if (ret)
-            printh("guest initial failed:'%s'\n", _interrupt_module.name);
-    }
+//    if (_guest_ops->init) {
+//        ret = _guest_ops->init();
+//        if (ret)
+//            printh("guest initial failed:'%s'\n", _interrupt_module.name);
+//    }
 
     return ret;
 }

@@ -21,7 +21,7 @@ export GUEST0_BIN="guestloader.bin"
 export GUEST0_BUILD_SCRIPT="cd ../linux && \
 make ARCH=arm vexpress_minhw_defconfig && \
 cp -a ../../patch/host-a15.dtb . && \
-make CROSS_COMPILE=arm-none-linux-gnueabi- ARCH=arm -j8 && \
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm -j8 && \
 cp System.map ../../guestimages/ && \
 cat host-a15.dtb >> arch/arm/boot/zImage && \
 cp arch/arm/boot/zImage ../../guestimages/ && \

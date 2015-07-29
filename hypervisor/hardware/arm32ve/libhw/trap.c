@@ -23,7 +23,7 @@
  */
 hvmm_status_t _hyp_dabort(struct arch_regs *regs)
 {
-    guest_dump_regs(regs);
+    guest_dump_regs(regs, __func__);
     hyp_abort_infinite();
     return HVMM_STATUS_UNKNOWN_ERROR;
 }
@@ -53,7 +53,7 @@ hvmm_status_t _hyp_irq(struct arch_regs *regs)
  */
 hvmm_status_t _hyp_unhandled(struct arch_regs *regs)
 {
-    guest_dump_regs(regs);
+    guest_dump_regs(regs, __func__);
     hyp_abort_infinite();
     return HVMM_STATUS_UNKNOWN_ERROR;
 }
@@ -148,6 +148,9 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
     info.sas = (iss & ISS_SAS_MASK) >> ISS_SAS_SHIFT;
     srt = (iss & ISS_SRT_MASK) >> ISS_SRT_SHIFT;
     info.value = &(regs->gpr[srt]);
+
+
+
     switch (ec) {
     case TRAP_EC_ZERO_UNKNOWN:
     case TRAP_EC_ZERO_WFI_WFE:
@@ -176,10 +179,10 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
         printH("[hyp] _hyp_hvc_service:unknown hsr.iss= %x\n", iss);
         printH("[hyp] hsr.ec= %x\n", ec);
         printH("[hyp] hsr= %x\n", hsr);
-        guest_dump_regs(regs);
+        guest_dump_regs(regs, __func__);
         goto trap_error;
     }
-
+//    level = VDEV_LEVEL_LOW;
     vdev_num = vdev_find(level, &info, regs);
     if (vdev_num < 0) {
         printH("[hvc] cann't search vdev number\n\r");

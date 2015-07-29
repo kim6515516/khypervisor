@@ -108,7 +108,7 @@ vmid_t sched_policy_determ_next(void);
 hvmm_status_t guest_perform_switch(struct arch_regs *regs);
 
 void guest_copy(struct guest_struct *dst, vmid_t vmid_src);
-void guest_dump_regs(struct arch_regs *regs);
+void guest_dump_regs(struct arch_regs *regs, char *name);
 void guest_sched_start(void);
 vmid_t guest_first_vmid(void);
 vmid_t guest_last_vmid(void);
@@ -119,9 +119,13 @@ hvmm_status_t guest_switchto(vmid_t vmid, uint8_t locked);
 extern void __mon_switch_to_guest_context(struct arch_regs *regs);
 hvmm_status_t guest_init();
 struct guest_struct get_guest(uint32_t guest_num);
+struct guest_struct* get_guest_pointer(uint32_t guest_num);
 void reboot_guest(vmid_t vmid, uint32_t pc, struct arch_regs **regs);
 void set_manually_select_vmid(vmid_t vmid);
 void clean_manually_select_vmid(void);
+hvmm_status_t perform_switch(struct arch_regs *regs, vmid_t next_vmid);
+hvmm_status_t perform_switch_forced (struct arch_regs *regs, vmid_t next_vmid);
+hvmm_status_t perform_switch_forced2 (struct guest_struct *dst, vmid_t next_vmid);
 
 static inline unsigned long num_of_guest(int cpu)
 {

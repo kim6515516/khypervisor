@@ -221,6 +221,11 @@ void gic_interrupt(int fiq, void *pregs)
    /* ACK */
     iar = _gic.ba_gicc[GICC_IAR];
     irq = iar & GICC_IAR_INTID_MASK;
+
+    uart_print("recevied irq in guestloader :");
+    uart_print_hex32(irq);
+    uart_print("\n\r");
+
     if (irq < _gic.lines) {
         if (irq == 0) {
             uart_print("ba_gicd:");

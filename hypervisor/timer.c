@@ -13,8 +13,8 @@
 #include <log/print.h>
 #include <smp.h>
 
-static timer_callback_t _host_callback[2];
-static timer_callback_t _guest_callback[2];
+static timer_callback_t _host_callback[4];
+static timer_callback_t _guest_callback[4];
 
 static struct timer_ops *_ops;
 

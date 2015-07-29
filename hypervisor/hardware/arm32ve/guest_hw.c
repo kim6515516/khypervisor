@@ -280,7 +280,6 @@ static hvmm_status_t guest_hw_restore(struct guest_struct *guest,
     context_copy_regs(current_regs, &guest->regs);
     context_restore_cops(&context->regs_cop);
     context_restore_banked(&context->regs_banked);
-
     return HVMM_STATUS_SUCCESS;
 }
 
@@ -334,6 +333,51 @@ static hvmm_status_t guest_hw_dump(uint8_t verbose, struct arch_regs *regs)
 
     }
     if (verbose & GUEST_VERBOSE_LEVEL_2) {
+        uint64_t pct = read_cntpct();
+        uint32_t tval = read_cnthp_tval();
+        uart_print("cntpct:");
+        uart_print_hex64(pct);
+        uart_print("\n\r");
+        uart_print("cnth_tval:");
+        uart_print_hex32(tval);
+        uart_print("\n\r");
+    }
+    return HVMM_STATUS_SUCCESS;
+}
+
+hvmm_status_t guest_hw_dump_extern(uint8_t verbose, struct arch_regs *regs)
+{
+    if (1) {
+        uart_print("cpsr: ");
+        uart_print_hex32(regs->cpsr);
+        uart_print("\n\r");
+        uart_print("  pc: ");
+        uart_print_hex32(regs->pc);
+        uart_print("\n\r");
+        uart_print("  lr: ");
+        uart_print_hex32(regs->lr);
+        uart_print("\n\r");
+        {
+            int i;
+            uart_print(" gpr:\n\r");
+            for (i = 0; i < ARCH_REGS_NUM_GPR; i++) {
+                uart_print("     ");
+                uart_print_hex32(regs->gpr[i]);
+                uart_print("\n\r");
+            }
+        }
+    }
+    if (1) {
+        uint32_t lr = 0;
+        asm volatile("mov  %0, lr" : "=r"(lr) : : "memory", "cc");
+        printH("context: restoring vmid[%d] mode(%x):%s pc:0x%x lr:0x%x\n",
+                _current_guest[0]->vmid,
+                _current_guest[0]->regs.cpsr & 0x1F,
+                _modename(_current_guest[0]->regs.cpsr & 0x1F),
+                _current_guest[0]->regs.pc, lr);
+
+    }
+    if (1) {
         uint64_t pct = read_cntpct();
         uint32_t tval = read_cnthp_tval();
         uart_print("cntpct:");

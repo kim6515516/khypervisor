@@ -71,13 +71,14 @@ void main(int boot_status)
     guestloader_init();
     /* Show Hypervisor Banner */
     uart_print(BANNER_STRING);
+    guestloader_autoboot();
     /* Auto boot or CLI boot */
-    while (1) {
-        /* Auto boot */
-        if (autoboot)
-            guestloader_autoboot();
-        /* Use CLI, if press any key */
-        else if (uart_tst_fifo())
-            guestloader_cliboot();
-    }
+//    while (1) {
+//        /* Auto boot */
+//        if (autoboot)
+//            guestloader_autoboot();
+//        /* Use CLI, if press any key */
+//        else if (uart_tst_fifo())
+//            guestloader_cliboot();
+//    }
 }

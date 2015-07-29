@@ -54,10 +54,15 @@ struct arch_regs {
     uint32_t gpr[ARCH_REGS_NUM_GPR]; /* R0 - R12 */
 } __attribute((packed));
 
+
 /* Defines the architecture specific information, except general regsiters */
 struct arch_context {
     struct regs_cop regs_cop;
     struct regs_banked regs_banked;
 };
 
+
 #endif
+
+hvmm_status_t guest_hw_dump_extern(uint8_t verbose, struct arch_regs *regs);
+
