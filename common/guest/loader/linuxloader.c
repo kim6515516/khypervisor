@@ -194,7 +194,7 @@ void linuxloader_setup_atags(uint32_t src)
 /* ramdisk-rtsm */
 
      "root=/dev/ram rw earlyprintk console=ttyAMA0 "
-     "mem=128M rdinit=/sbin/init";
+     "mem=256M rdinit=/sbin/init";
 
 /* android-arndale board */
     /*

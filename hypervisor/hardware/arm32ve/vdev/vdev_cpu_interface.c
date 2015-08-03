@@ -190,6 +190,7 @@ static hvmm_status_t vdev_cpu_interface_access_handler(uint32_t write, uint32_t 
     unsigned int vmid = guest_current_vmid();
     volatile int *addr;
     addr = (CPU_INTERFACE_BASE_ADDR + offset);
+    volatile int *daddr = (CPU_INTERFACE_BASE_ADDR + GIC_OFFSET_GICC_DIR);
     if (offset == 20)
     	printH("iar = %d\n", *addr & 0x03ff);
     if (offset == 24)
@@ -197,26 +198,33 @@ static hvmm_status_t vdev_cpu_interface_access_handler(uint32_t write, uint32_t 
     if (!write) {
         /* READ */
     	*pvalue =  (uint32_t) (*((volatile unsigned int*) (CPU_INTERFACE_BASE_ADDR + offset)));
-    	printH("1111111111111 %x\n", *pvalue);
-        if (offset == 20)
-        	*pvalue = 34;
-        if (offset == 12)
-        	*pvalue = 34;
 
-       }
-        else {
+//        if (offset == 20)
+//        	*pvalue = 34;
+        if (offset == 0x0C) {
+        	*pvalue = ci_regs[0].GICC_IAR;
+        	printH("READ 0x0C: GICC_IAR %x\n", *pvalue);
+        }
+//    	printH("1111111111111 %x\n", *pvalue);
+       } else {
         /* WRITE */
-        if (offset == 20)
-        	*pvalue = 34;
-        if (offset == 12)
-        	*pvalue = 34;
+        	if (offset == 0x10) {
+//        		ci_regs[0].GICC_IAR = -1;
+        		printH("WRITE 0x10: ci_regs[0].GICC_IAR = -1  %x\n", *pvalue);
+
+        		ci_regs[0].GICC_IAR = 0x000003FF ;
+        		*daddr = *pvalue;
+                int *dir = 0x2c001000;
+//                *dir = *pvalue;
+
+        	}
     	*addr = *pvalue;
 
     }
-    printH("%s: %s offset:%d value:%x\n", __func__,
+    printH("%s: %s offset:%x value:%x\n", __func__,
             write ? "write" : "read", offset,
-            write ? *pvalue : (uint32_t) pvalue);
-    printH("AAAAAAAAAAAAAA %x\n", *addr);
+            write ? *pvalue : *pvalue);
+//    printH("AAAAAAAAAAAAAA %x\n", *addr);
     result = HVMM_STATUS_SUCCESS;
     return result;
 }
@@ -257,6 +265,12 @@ static int32_t vdev_cpu_interface_check(struct arch_vdev_trigger_info *info,
     if (info->fipa >= _vdev_cpu_interface_info.base &&
         offset < _vdev_cpu_interface_info.size)
         return 0;
+    /**
+     * Find vdev using tag.  Hard coding.
+     */
+    if( !regs ) {
+    	return 55;
+    }
     return VDEV_NOT_FOUND;
 }
 
@@ -283,9 +297,11 @@ static hvmm_status_t vdev_cpu_interface_reset(void)
     	ci_regs[i].GICC_BPR =
                 (uint32_t) (*((volatile unsigned int*) (CPU_INTERFACE_BASE_ADDR
                         + GIC_OFFSET_GICC_BPR)));
-    	ci_regs[i].GICC_IAR =
-                (uint32_t) (*((volatile unsigned int*) (CPU_INTERFACE_BASE_ADDR
-                        + GIC_OFFSET_GICC_IAR)));
+//    	ci_regs[i].GICC_IAR =
+//                (uint32_t) (*((volatile unsigned int*) (CPU_INTERFACE_BASE_ADDR
+//                        + GIC_OFFSET_GICC_IAR)));
+    	ci_regs[i].GICC_IAR = 0x000003FF;
+
     	ci_regs[i].GICC_EOIR =
                 (uint32_t) (*((volatile unsigned int*) (CPU_INTERFACE_BASE_ADDR
                         + GIC_OFFSET_GICC_EOIR)));
@@ -328,18 +344,56 @@ static hvmm_status_t vdev_cpu_interface_reset(void)
     return HVMM_STATUS_SUCCESS;
 }
 
+static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, int irq)
+{
+	volatile int *addr;
+	hvmm_status_t result = HVMM_STATUS_BAD_ACCESS;
+
+//	 printH("vdev_cpu_interface_execute: irq: %d, type : %d\n", irq, type);
+	if (type == 0) { // EOI
+	    addr = (CPU_INTERFACE_BASE_ADDR + GIC_OFFSET_GICC_EOIR);
+	    *addr = irq;
+//        int *dir = 0x2c001000;
+//              *dir = irq;
+
+	    printH("vdev_cpu_interface_execute, eoi: irq: %d\n", irq);
+	    return HVMM_STATUS_SUCCESS;
+
+	} else if (type == 1) {  // inject
+		if(ci_regs[0].GICC_IAR != 0x000003FF) {
+			printH("vdev_cpu_interface_execute, inject-reject: irq: %d\n", irq);
+			return HVMM_STATUS_SUCCESS;
+		} else {
+		ci_regs[0].GICC_IAR = irq;
+		printH("vdev_cpu_interface_execute, inject-ok: irq: %d\n", irq);
+		}
+		return HVMM_STATUS_SUCCESS;
+	} else if (type == 2) {
+		return ci_regs[0].GICC_IAR;
+	} else if (type == 3) { //pending
+
+	    addr = (CPU_INTERFACE_BASE_ADDR + GIC_OFFSET_GICC_HPPIR);
+	    *addr = irq;
+
+		return HVMM_STATUS_SUCCESS;
+	}
+	return HVMM_STATUS_SUCCESS;
+}
+
 struct vdev_ops _vdev_cpu_interface_ops = {
     .init = vdev_cpu_interface_reset,
     .check = vdev_cpu_interface_check,
     .read = vdev_cpu_interface_read,
     .write = vdev_cpu_interface_write,
     .post = vdev_cpu_interface_post,
+    .execute = vdev_cpu_interface_execute,
 };
 
 struct vdev_module _vdev_cpu_interface_module = {
     .name = "K-Hypervisor vDevice cpu_interface Module",
     .author = "Kookmin Univ.",
     .ops = &_vdev_cpu_interface_ops,
+    .tag = 55,
 };
 
 hvmm_status_t vdev_cpu_interface()

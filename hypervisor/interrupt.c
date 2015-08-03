@@ -202,26 +202,82 @@ static void context_save_banked(struct regs_banked *regs_banked)
                  : "=r"(regs_banked->r11_fiq) : : "memory", "cc");
     asm volatile(" mrs     %0, r12_fiq\n\t"
                  : "=r"(regs_banked->r12_fiq) : : "memory", "cc");
+
+    asm volatile(" mrs     %0, spsr_hyp\n\t"
+                 : "=r"(regs_banked->spsr_hyp) : : "memory", "cc");
+    asm volatile(" mrs     %0, elr_hyp\n\t"
+                 : "=r"(regs_banked->elr_hyp) : : "memory", "cc");
 }
-static struct guest_struct target;
+static void context_save_cops(struct regs_cop *regs_cop)
+{
+    regs_cop->vbar = read_vbar();
+    regs_cop->ttbr0 = read_ttbr0();
+    regs_cop->ttbr1 = read_ttbr1();
+    regs_cop->ttbcr = read_ttbcr();
+    regs_cop->sctlr = read_sctlr();
+}
+static void context_copy_banked(struct regs_banked *banked_dst, struct
+        regs_banked *banked_src)
+{
+    banked_dst->sp_usr = banked_src->sp_usr;
+    banked_dst->spsr_svc = banked_src->spsr_svc;
+    banked_dst->sp_svc = banked_src->sp_svc;
+    banked_dst->lr_svc = banked_src->lr_svc;
+    banked_dst->spsr_abt = banked_src->spsr_abt;
+    banked_dst->sp_abt = banked_src->sp_abt;
+    banked_dst->lr_abt = banked_src->lr_abt;
+    banked_dst->spsr_und = banked_src->spsr_und;
+    banked_dst->sp_und = banked_src->sp_und;
+    banked_dst->lr_und = banked_src->sp_und;
+    banked_dst->spsr_irq = banked_src->spsr_irq;
+    banked_dst->sp_irq = banked_src->sp_irq;
+    banked_dst->lr_irq = banked_src->lr_irq;
+    banked_dst->spsr_fiq = banked_src->spsr_fiq;
+    banked_dst->lr_fiq = banked_src->lr_fiq;
+    banked_dst->r8_fiq = banked_src->r8_fiq;
+    banked_dst->r9_fiq = banked_src->r9_fiq;
+    banked_dst->r10_fiq = banked_src->r10_fiq;
+    banked_dst->r11_fiq = banked_src->r11_fiq;
+    banked_dst->r12_fiq = banked_src->r12_fiq;
+}
+static void context_copy_regs(struct arch_regs *regs_dst,
+                struct arch_regs *regs_src)
+{
+    int i;
+    regs_dst->cpsr = regs_src->cpsr;
+    regs_dst->pc = regs_src->pc;
+    regs_dst->lr = regs_src->lr;
+    for (i = 0; i < ARCH_REGS_NUM_GPR; i++)
+        regs_dst->gpr[i] = regs_src->gpr[i];
+}
+static struct guest_struct *target;
 void changeGuestMode(int irq, void *current_regs)
 {
 	struct arch_regs *regs = (struct arch_regs *)current_regs;
     int i = 0;
+    int ci = -1;
 	hvmm_status_t ret = HVMM_STATUS_SUCCESS;
-    guest_hw_dump_extern(0x4, current_regs);
-    printH("changeGuest mode IRQ : %d\n", irq);
+//    guest_hw_dump_extern(0x4, current_regs);
+    printH("enter changeGuest mode IRQ : %d\n", irq);
     uint32_t lr, sp;
+    target = get_guest_pointer(guest_current_vmid());
+    if (target)
+    	;
+    else
+    	printH("target is null : %d\n", irq);
 
-    context_save_banked(&target.context);
-    target.vmid = 0;
-    target.regs.lr = regs->lr;
-    target.regs.pc = regs->pc;
-    target.regs.cpsr = regs->cpsr;
+    ci  = vdev_find_tag(0, 55);
+//    if (vdev_execute(0, ci, 2, 0) != 0x000003FF) {
+//    	printH("iar is not 0x000003FF : \n");
+//    	return;
+//    }
 
-    for (i=0; i<ARCH_REGS_NUM_GPR; i++) {
-    	target.regs.gpr[i] = regs->gpr[i];
-    }
+    context_save_banked(&target->context.regs_banked);
+    context_save_cops(&target->context.regs_cop);
+//    target->vmid = 0;
+    context_copy_regs(target, regs);
+
+
 //    printH("start!!\n");
 //    printH("show sp's %x \n", target->context.regs_banked.sp_usr);
 //    printH("show sp's %x \n", target->context.regs_banked.sp_abt);
@@ -233,24 +289,49 @@ void changeGuestMode(int irq, void *current_regs)
 //    asm volatile(" mrs     %0, sp_usr\n\t" : "=r"(sp) : : "memory", "cc");
 //    printH("show sp's %x \n", sp);
 //    printH("end!!\n");
+//    guest_hw_dump_extern(0x4, target);
+//    printH("sctlr : %x\n",target->context.regs_cop.sctlr);
+//    printH("ttbcr : %x\n",target->context.regs_cop.ttbcr);
+//    printH("ttbr0 : %x\n",target->context.regs_cop.ttbr0);
+//    printH("ttbr1 : %x\n",target->context.regs_cop.ttbr1);
+//    printH("vbar : %x\n",target->context.regs_cop.vbar);
 
+//    if(target->context.regs_cop.ttbr1 == 0) {
+//    	 printH("ttbr is 0, guest n: %d\n", guest_current_vmid());
+//    	 vdev_execute(0, ci, 1, irq); //irq inject
+//    	return;
+//    }
+//    int check = target->regs.cpsr & (0x1 << 7);
+//    if ( check )
+//    {
+//    	printH("Guest IRQ is disalbe\n");
+//    	vdev_execute(0, ci, 0, irq); //irq pendding
+//    	return;
+//    }
+//    else
+//    	printH("Guest IRQ not disalbe\n");
 
-    target.context.regs_banked.spsr_irq = target.regs.cpsr;
-    target.regs.cpsr = target.regs.cpsr & ~(0x1 << 5);
-    target.regs.cpsr = target.regs.cpsr | (0x1 << 7);
+    target->context.regs_banked.spsr_irq = target->regs.cpsr;
+    target->regs.cpsr = target->regs.cpsr & ~(0x1 << 5);
+    target->regs.cpsr = target->regs.cpsr | (0x1 << 7);
 //    target->regs.cpsr = target->regs.cpsr & ~(0x1F);
-    printH("changeGuest before_cpsr : %x\n", target.regs.cpsr);
-    target.regs.cpsr = target.regs.cpsr & ~(0x1F);
-    target.regs.cpsr = target.regs.cpsr | 0x12;
-    printH("changeGuest after_cpsr : %x\n", target.regs.cpsr);
-    printH("changeGuest before_pc : %x\n", target.regs.pc);
-    target.context.regs_banked.lr_irq = target.regs.pc - 0x4;
-    target.regs.pc = 0xffff0018;
+    printH("changeGuest before_cpsr : %x\n", target->regs.cpsr);
+    target->regs.cpsr = target->regs.cpsr & ~(0x1F);
+    target->regs.cpsr = target->regs.cpsr | 0x12;
+    printH("changeGuest after_cpsr : %x\n", target->regs.cpsr);
+    printH("changeGuest before_pc : %x\n", target->regs.pc);
+    printH("changeGuest elr_hyp : %x\n", target->context.regs_banked.elr_hyp);
+    target->context.regs_banked.lr_irq = target->regs.pc + 4;
+
+    if (guest_current_vmid() == 0)  // linux
+    	target->regs.pc = 0xffff0018;
+    else // bm guest
+    	target->regs.pc = 0xffff0018;
 //    target->regs.gpr[13] = 0x80B55FA8;
-    target.regs.lr = target.regs.pc - 4;
+//    target->regs.lr = target->regs.pc - 4;
 //    target->regs.pc = 0x8000DA00;
-    printH("changeGuest after_pc : %x\n", target.regs.pc);
-    printH("changeGuest cpsr : %x\n", target.regs.cpsr);
+    printH("changeGuest after_pc : %x\n", target->regs.pc);
+    printH("changeGuest cpsr : %x\n", target->regs.cpsr);
 //    _guest_ops->end(irq);
 //    guest_switchto(0, 0);
 
@@ -258,20 +339,29 @@ void changeGuestMode(int irq, void *current_regs)
     addr = (0x2C002000 + 0x20);
 //    *addr = 34;
     printH("changeGuest iar : %x\n", *addr);
-    printH("changeGuest end.\n");
-    perform_switch_forced2(&target, 0);
+
+
+    printH("find dev : %d \n", ci);
+    vdev_execute(0, ci, 1, irq); //irq inject
+    printH("changeGuest. switch forced\n");
+    perform_switch_forced2(target, 0);
+    regs->cpsr = target->regs.cpsr;
+    regs->lr = target->regs.lr;
+    regs->pc = target->regs.pc;
+    printH("changeGuest. end\n");
 //    _mon_switch_to_guest_context(&target->regs);
 }
+int c  =0 ;
 void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 {
     struct arch_regs *regs = (struct arch_regs *)current_regs;
     uint32_t cpu = smp_processor_id();
-
-    if(irq != 26 && irq !=30) {
-    // 	_guest_ops->end(irq);
-    	changeGuestMode(irq, current_regs) ;
-    	return;
-    }
+//    c ++;
+//    if(( irq != 26) || (irq ==30 && c > 10000) ) {
+//    // 	_guest_ops->end(irq);
+//    		changeGuestMode(irq, current_regs) ;
+//    	return;
+//    }
 
 //    printH("isr IRQ : %d\n", irq);
 
@@ -282,7 +372,7 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 
     if (irq < MAX_IRQS) {
         if (interrupt_check_guest_irq(irq) == GUEST_IRQ) {
-
+//        	printH("check guest irq. end: %d\n", irq);
 #ifdef _SMP_
             /*
              * workaround for arndale port
@@ -300,10 +390,14 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
             /* IRQ INJECTION */
             /* priority drop only for hanlding irq in guest */
             /* guest_interrupt_end() */
-            _guest_ops->end(irq);
-            interrupt_inject_enabled_guest(NUM_GUESTS_STATIC, irq);
+//            if(guest_current_vmid()!=0)
+//            	_guest_ops->end(irq);
+//            else
+            	changeGuestMode(irq, current_regs) ;
+//            interrupt_inject_enabled_guest(NUM_GUESTS_STATIC, irq);
         } else {
             /* host irq */
+        	printH("check host irq. end: %d\n", irq);
             if (irq < MAX_PPI_IRQS) {
                 if (_host_ppi_handlers[cpu][irq])
                     _host_ppi_handlers[cpu][irq](irq, regs, 0);
@@ -312,7 +406,17 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
                     _host_spi_handlers[irq](irq, regs, 0);
             }
             /* host_interrupt_end() */
+
             _host_ops->end(irq);
+            printH("!!!!!!!!!!!!!!!!!!!!!!!1C is %d\n", c);
+            if(c > 7000){
+//            	if(guest_current_vmid()==0)
+            		changeGuestMode(37, current_regs) ;
+            printH("cDDDDDDDDDDDDDDDDDDDDDDDDDDDD is 1000\n");
+            if(c > 15000)
+            	c =7000;
+            }
+            c++;
         }
     } else
         printh("interrupt:no pending irq:%x\n", irq);

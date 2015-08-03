@@ -75,6 +75,60 @@ int32_t vdev_find(int level, struct arch_vdev_trigger_info *info,
     return vdev_num;
 }
 
+int32_t vdev_find_tag(int level, int tag)
+{
+    int32_t i;
+    int32_t vdev_num = VDEV_NOT_FOUND;
+    struct vdev_module *vdev;
+    printH("vdev_find_tag\n");
+    for (i = 0; i < _vdev_size[level]; i++) {
+        vdev = _vdev_module[level][i];
+        if (!vdev) {
+            printh("vdev : Could not get module, level : %d, i : %d\n",
+                    level, i);
+            break;
+        }
+        if (!vdev->ops) {
+            printh("vdev : Could not get operation, level : %d, i : %d\n",
+                    level, i);
+            break;
+        }
+        if (!vdev->ops->check)
+            continue;
+        if (tag == vdev->ops->check(0, 0)) {
+            vdev_num = i;
+            break;
+        }
+    }
+
+    return vdev_num;
+}
+
+int32_t vdev_execute(int level, int num, int type, int data)
+{
+    int32_t size = 0;
+    struct vdev_module *vdev = _vdev_module[level][num];
+
+    if (!vdev) {
+        printH("vdev : Could not get module, level : %d, i : %d\n",
+                level, num);
+        return VDEV_ERROR;
+    }
+
+    if (!vdev->ops) {
+        printH("vdev : Could not get operation, level : %d, i : %d\n",
+                level, num);
+        return VDEV_ERROR;
+    }
+
+    if (vdev->ops->execute)
+        size = vdev->ops->execute(level, num, type, data);
+    else
+    	printH("vdev : Could not get operation, level : %d, i : %d\n",
+    	                level, num);
+    return size;
+}
+
 int32_t vdev_read(int level, int num, struct arch_vdev_trigger_info *info,
             struct arch_regs *regs)
 {

@@ -16,7 +16,7 @@
 static struct guest_struct guests[4];
 static int _current_guest_vmid[4] = {VMID_INVALID, VMID_INVALID};
 static int _next_guest_vmid[4] = {VMID_INVALID, };
-struct guest_struct *_current_guest[4];
+struct guest_struct* _current_guest[4];
 /* further switch request will be ignored if set */
 static uint8_t _switch_locked[4];
 
@@ -83,10 +83,10 @@ hvmm_status_t perform_switch_forced2(struct guest_struct *guest, vmid_t next_vmi
     /* _curreng_guest_vmid -> next_vmid */
 
     hvmm_status_t result = HVMM_STATUS_SUCCESS;
-    vdev_restore(0);
-    interrupt_restore(0);
-    memory_restore(0);
-    guest_restore(guest, 0);
+//    vdev_restore(0);
+//    interrupt_restore(0);
+//    memory_restore(0);
+    guest_restore(guest, &guest->regs);
 
     return result;
 }

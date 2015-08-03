@@ -99,6 +99,8 @@ struct vdev_ops {
     /** Dump state of the vdev */
     hvmm_status_t (*dump)(void);
 
+    /** Execute vDevice function */
+    hvmm_status_t (*execute)(int level, int num, int type, int data);
 };
 
 struct vdev_module {
@@ -142,5 +144,7 @@ hvmm_status_t vdev_post(int level, int num, struct arch_vdev_trigger_info *info,
 hvmm_status_t vdev_save(vmid_t vmid);
 hvmm_status_t vdev_restore(vmid_t vmid);
 hvmm_status_t vdev_init(void);
+int32_t vdev_execute(int level, int num, int type, int data);
+int32_t vdev_find_tag(int level, int tag);
 
 #endif /* __VDEV_H_ */

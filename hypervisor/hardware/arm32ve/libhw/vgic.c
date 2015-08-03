@@ -10,7 +10,7 @@
 #include <log/print.h>
 
 /* for test, surpress traces */
-#define __VGIC_DISABLE_TRACE__
+//#define __VGIC_DISABLE_TRACE__
 
 #ifndef _SMP_
 #define VGIC_SIMULATE_HWVIRQ
@@ -222,6 +222,63 @@ hvmm_status_t virq_inject(vmid_t vmid, uint32_t virq,
     }
     return result;
 }
+
+hvmm_status_t virq_inject_emulator(vmid_t vmid, uint32_t virq,
+                uint32_t pirq, uint8_t hw)
+{
+    hvmm_status_t result = HVMM_STATUS_BUSY;
+    int i;
+    struct virq_entry *q = &_guest_virqs[vmid][0];
+    printH("virq_inject_emulator: virq: %d\n", virq);
+    /* Interrupt occurs to the same virtual machine running guest;Then,
+     * we directly inject into guest. If it's not running guest's interrupt,
+     * we save interrupt in _guest_virqs due to preventing loss of
+     * the interrupt.
+     */
+
+
+//    if (vmid == guest_current_vmid()) {
+//        uint32_t slot;
+//        if (hw) {
+//            slot = vgic_inject_virq_hw(virq,
+//                    VIRQ_STATE_PENDING, GIC_INT_PRIORITY_DEFAULT,
+//                    pirq);
+//            if (slot != VGIC_SLOT_NOTFOUND)
+//                vgic_slotpirq_set(vmid, slot, pirq);
+//        } else {
+//            slot = vgic_inject_virq_sw(virq,
+//                    VIRQ_STATE_PENDING, 0,
+//                    smp_processor_id(), 1);
+//        }
+//        if (slot == VGIC_SLOT_NOTFOUND)
+//            return result;
+//
+//        vgic_slotvirq_set(vmid, slot, virq);
+//    } else {
+//        int slot = vgic_slotvirq_getslot(vmid, virq);
+//        if (slot == SLOT_INVALID) {
+//            /* Inject only the same virq is not present in a slot */
+//            for (i = 0; i < VIRQ_MAX_ENTRIES; i++) {
+//                if (q[i].valid == 0) {
+//                    q[i].pirq = pirq;
+//                    q[i].virq = virq;
+//                    q[i].hw = hw;
+//                    q[i].valid = 1;
+//                    result = HVMM_STATUS_SUCCESS;
+//                    break;
+//                }
+//            }
+//            printh("virq: queueing virq %d pirq %d to vmid %d %s\n",
+//                    virq, pirq, vmid,
+//                    result == HVMM_STATUS_SUCCESS ? "done" : "failed");
+//        } else {
+//            printh("virq: rejected queueing duplicated virq %d pirq %d to "
+//                    "vmid %d %s\n", virq, pirq, vmid);
+//        }
+//    }
+    return result;
+}
+
 hvmm_status_t vgic_flush_virqs(vmid_t vmid)
 {
     /* Actual injection of queued VIRQs takes place here */
@@ -361,7 +418,7 @@ static void _vgic_dump_status(void)
  */
 static void _vgic_dump_regs(void)
 {
-#ifndef __VGIC_DISABLE_TRACE__
+#ifdef __VGIC_DISABLE_TRACE__
     int i;
     HVMM_TRACE_ENTER();
     uart_print("  hcr:");
@@ -525,6 +582,7 @@ uint32_t vgic_inject_virq(
         _vgic.base[GICH_LR + slot] = lr_desc;
 
     _vgic_dump_regs();
+
     HVMM_TRACE_EXIT();
     return slot;
 }
@@ -539,6 +597,7 @@ uint32_t vgic_inject_virq_hw(uint32_t virq, enum virq_state state,
     HVMM_TRACE_ENTER();
     slot = vgic_find_free_slot();
     HVMM_TRACE_HEX32("slot:", slot);
+
     if (slot != VGIC_SLOT_NOTFOUND) {
 #ifdef VGIC_SIMULATE_HWVIRQ
         slot = vgic_inject_virq(virq, slot, state, priority, 0,

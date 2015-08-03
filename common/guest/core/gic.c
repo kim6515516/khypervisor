@@ -236,12 +236,18 @@ void gic_interrupt(int fiq, void *pregs)
             uart_print("\n\r");
         }
         /* ISR */
-        if (_gic.handlers[irq])
-            _gic.handlers[irq](irq, regs, 0);
+//        if (_gic.handlers[irq])
+//            _gic.handlers[irq](irq, regs, 0);
 
         /* Completion & Deactivation */
+        uart_print("Completion & Deactivation1");
+        uart_print("\n\r");
         _gic.ba_gicc[GICC_EOIR] = irq;
-        _gic.ba_gicc[GICC_DIR] = irq;
+//        _gic.ba_gicc[GICC_DIR] = irq;
+        int *dir = 0x2c001000;
+        *dir = irq;
+        uart_print("Completion & Deactivation2");
+        uart_print("\n\r");
     } else {
     /*TODO  Need to know why this part occurred*/
     #if 0

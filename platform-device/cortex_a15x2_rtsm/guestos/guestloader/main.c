@@ -71,6 +71,9 @@ void main(int boot_status)
     guestloader_init();
     /* Show Hypervisor Banner */
     uart_print(BANNER_STRING);
+
+//    while(1)
+//    	;
     guestloader_autoboot();
     /* Auto boot or CLI boot */
 //    while (1) {

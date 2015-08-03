@@ -283,6 +283,20 @@ static hvmm_status_t guest_hw_restore(struct guest_struct *guest,
     return HVMM_STATUS_SUCCESS;
 }
 
+static hvmm_status_t guest_hw_restore2(struct guest_struct *guest,
+                struct arch_regs *current_regs)
+{
+    struct arch_context *context = &guest->context;
+
+    context_copy_regs(current_regs, &guest->regs);
+     context_restore_cops(&context->regs_cop);
+     context_restore_banked(&context->regs_banked);
+     __mon_switch_to_guest_context(&guest->regs);
+
+
+    return HVMM_STATUS_SUCCESS;
+}
+
 static hvmm_status_t guest_hw_init(struct guest_struct *guest,
                 struct arch_regs *regs)
 {

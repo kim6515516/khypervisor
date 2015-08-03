@@ -47,8 +47,11 @@ static hvmm_status_t vdev_vtimer_access_handler(uint32_t write,
         case 0x0:
             vtimer_regs[vmid].vtimer_mask = *pvalue;
             vtimer_changed_status(vmid, *pvalue);
+
             result = HVMM_STATUS_SUCCESS;
                 break;
+                while(1)
+                		;
         }
     }
     return result;
@@ -97,9 +100,11 @@ static int32_t vdev_vtimer_check(struct arch_vdev_trigger_info *info,
 void callback_timer(void *pdata)
 {
     vmid_t vmid = guest_current_vmid();
-
+    printH("guest callback timer\n");
     if (_timer_status[vmid] == 0)
         interrupt_guest_inject(vmid, VTIMER_IRQ, 0, INJECT_SW);
+    else
+    	printH("guest callback timer null\n");
 }
 
 static hvmm_status_t vdev_vtimer_reset(void)

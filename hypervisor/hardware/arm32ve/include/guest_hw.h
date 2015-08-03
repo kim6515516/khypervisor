@@ -44,6 +44,10 @@ struct regs_banked {
     uint32_t r10_fiq;
     uint32_t r11_fiq;
     uint32_t r12_fiq;
+
+    //hyp
+    uint32_t spsr_hyp;
+    uint32_t elr_hyp;
 };
 
 /* Defines the architecture specific registers */

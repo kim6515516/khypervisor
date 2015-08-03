@@ -127,7 +127,7 @@ static int32_t vdev_sample_check(struct arch_vdev_trigger_info *info,
 {
     uint32_t offset = info->fipa - _vdev_sample_info.base;
 
-    printH("info fipa : %x\n", info->fipa);
+    printH("dev_smaple_check_info fipa : %x\n", info->fipa);
     if (info->fipa >= _vdev_sample_info.base &&
         offset < _vdev_sample_info.size)
         return 0;

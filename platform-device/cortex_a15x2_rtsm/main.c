@@ -62,16 +62,41 @@ static struct memmap_desc guest0_device_md[] = {
     { "SMSC91c111i", 0x1A000000, 0x1A000000, SZ_16M, MEMATTR_DM },
     { "simplebus2", 0x18000000, 0x18000000, SZ_64M, MEMATTR_DM },
     { "simplebus2", 0x00160000, 0x00160000, SZ_64M, MEMATTR_DM },
-    { "q", 0x00000000, 0x00000000, SZ_64M, MEMATTR_DM },
-    { "b", 0xFFFF0000, 0xFFFF0000, SZ_64M, MEMATTR_DM },
+    { "q", 0x1C014000, 0x1C014000, SZ_64K, MEMATTR_DM },
+//    { "b", 0xFFFF0000, 0xFFFF0000, SZ_64M, MEMATTR_DM },
     { 0, 0, 0, 0, 0 }
 };
 
 static struct memmap_desc guest1_device_md[] = {
-    { "uart", 0x1C090000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
-    { "sp804", 0x1C110000, 0x1C120000, SZ_4K, MEMATTR_DM },
-    { "gicc", 0x2C000000 | GIC_OFFSET_GICC,
-       CFG_GIC_BASE_PA | GIC_OFFSET_GICVI, SZ_8K, MEMATTR_DM },
+	    { "sysreg", 0x1C010000, 0x1C010000, SZ_4K, MEMATTR_DM },
+	    { "sysctl", 0x1C020000, 0x1C020000, SZ_4K, MEMATTR_DM },
+	    { "aaci", 0x1C040000, 0x1C040000, SZ_4K, MEMATTR_DM },
+	    { "mmci", 0x1C050000, 0x1C050000, SZ_4K, MEMATTR_DM },
+	    { "kmi", 0x1C060000, 0x1C060000,  SZ_64K, MEMATTR_DM },
+	    { "kmi2", 0x1C070000, 0x1C070000, SZ_64K, MEMATTR_DM },
+	    { "v2m_serial0", 0x1C090000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
+	    { "v2m_serial1", 0x1C0A0000, 0x1C090000, SZ_4K, MEMATTR_DM },
+	    { "v2m_serial2", 0x1C0B0000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
+	    { "v2m_serial3", 0x1C0C0000, 0x1C0C0000, SZ_4K, MEMATTR_DM },
+	    { "wdt", 0x1C0F0000, 0x1C0F0000, SZ_4K, MEMATTR_DM },
+	    { "v2m_timer01(sp804)", 0x1C110000, 0x1C110000, SZ_4K,
+	            MEMATTR_DM },
+	    { "v2m_timer23", 0x1C120000, 0x1C120000, SZ_4K, MEMATTR_DM },
+	    { "rtc", 0x1C170000, 0x1C170000, SZ_4K, MEMATTR_DM },
+	    { "clcd", 0x1C1F0000, 0x1C1F0000, SZ_4K, MEMATTR_DM },
+	//    { "gicc", CFG_GIC_BASE_PA | GIC_OFFSET_GICC,
+	//            CFG_GIC_BASE_PA | GIC_OFFSET_GICVI, SZ_8K,
+	//            MEMATTR_DM },
+	    { "SMSC91c111i", 0x1A000000, 0x1A000000, SZ_16M, MEMATTR_DM },
+	    { "simplebus2", 0x18000000, 0x18000000, SZ_64M, MEMATTR_DM },
+	    { "simplebus2", 0x00160000, 0x00160000, SZ_64M, MEMATTR_DM },
+	    { "q", 0x1C014000, 0x1C014000, SZ_64K, MEMATTR_DM },
+	//    { "b", 0xFFFF0000, 0xFFFF0000, SZ_64M, MEMATTR_DM },
+
+//    { "uart", 0x1C090000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
+//    { "sp804", 0x1C110000, 0x1C120000, SZ_4K, MEMATTR_DM },
+//    { "gicc", 0x2C000000 | GIC_OFFSET_GICC,
+//       CFG_GIC_BASE_PA | GIC_OFFSET_GICVI, SZ_8K, MEMATTR_DM },
     {0, 0, 0, 0, 0}
 };
 
@@ -289,57 +314,73 @@ void setup_interrupt()
      *  vimm-0, pirq-41, virq-41 = MCI - pl180
      *  vimm-0, pirq-42, virq-42 = MCI - pl180
      */
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 1, 1);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 16, 16);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 17, 17);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 18, 18);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 19, 19);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 31, 31);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 32, 32);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 33, 33);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 34, 34);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 35, 35);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 36, 36);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 37, 38);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 38, 37);
-    DECLARE_VIRQMAP(_guest_virqmap, 1, 39, 37);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 40, 37);
-    DECLARE_VIRQMAP(_guest_virqmap, 3, 48, 37);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 41, 41);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 42, 42);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 43, 43);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 44, 44);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 45, 45);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 46, 46);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 47, 47);
-    DECLARE_VIRQMAP(_guest_virqmap, 0, 69, 69);
-
-
-
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 1, 1);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 16, 16);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 17, 17);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 18, 18);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 19, 19);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 31, 31);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 32, 32);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 33, 33);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 34, 34);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 35, 35);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 36, 36);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 37, 38);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 38, 37);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 39, 37);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 40, 37);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 48, 37);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 41, 41);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 42, 42);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 43, 43);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 44, 44);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 45, 45);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 46, 46);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 47, 47);
-    DECLARE_VIRQMAP(_guest_virqmap, 2, 69, 69);
+    for (i=0 ; i< MAX_IRQS; i++) {
+    	if(i != 26)
+    		DECLARE_VIRQMAP(_guest_virqmap, 0, i, i);
+    }
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 1, 1);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 16, 16);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 17, 17);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 18, 18);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 19, 19);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 31, 31);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 32, 32);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 33, 33);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 30, 30);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 34, 34);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 35, 35);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 36, 36);
+//
+//
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 37, 37);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 38, 38);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 39, 39);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 40, 40);
+//
+////    DECLARE_VIRQMAP(_guest_virqmap, 0, 37, 38);
+////    DECLARE_VIRQMAP(_guest_virqmap, 0, 38, 37);
+////    DECLARE_VIRQMAP(_guest_virqmap, 1, 39, 37);
+////    DECLARE_VIRQMAP(_guest_virqmap, 2, 40, 37);
+////    DECLARE_VIRQMAP(_guest_virqmap, 3, 48, 37);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 41, 41);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 42, 42);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 43, 43);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 44, 44);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 45, 45);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 46, 46);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 47, 47);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 48, 48);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 49, 49);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 50, 50);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 51, 51);
+//    DECLARE_VIRQMAP(_guest_virqmap, 0, 69, 69);
+//
+//
+//
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 1, 1);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 16, 16);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 17, 17);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 18, 18);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 19, 19);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 31, 31);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 32, 32);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 33, 33);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 34, 34);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 35, 35);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 36, 36);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 37, 38);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 38, 37);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 39, 37);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 40, 37);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 48, 37);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 41, 41);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 42, 42);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 43, 43);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 44, 44);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 45, 45);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 46, 46);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 47, 47);
+//    DECLARE_VIRQMAP(_guest_virqmap, 2, 69, 69);
 
 }
 
@@ -420,8 +461,8 @@ int main_cpu_init()
         printh("[start_guest] virtual device initialization failed...\n");
 
     /* Begin running test code for newly implemented features */
-    if (basic_tests_run(TESTS_ENABLE_GIC_TIMER))
-        printh("[start_guest] basic testing failed...\n");
+//    if (basic_tests_run(TESTS_ENABLE_GIC_TIMER))
+//        printh("[start_guest] basic testing failed...\n");
 
     /* Print Banner */
     printH("%s", BANNER_STRING);
