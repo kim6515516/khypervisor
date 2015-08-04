@@ -364,7 +364,11 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 //    }
 
 //    printH("isr IRQ : %d\n", irq);
-
+    if ( irq == 39 || irq == 38 )
+    {
+    	printH("irq 39\n");
+    	while(1) ;
+    }
     if(cpu) {
     	printH("second cpu isr.\n");
     	return ;
@@ -408,13 +412,25 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
             /* host_interrupt_end() */
 
             _host_ops->end(irq);
-            printH("!!!!!!!!!!!!!!!!!!!!!!!1C is %d\n", c);
+//            printH("!!!!!!!!!!!!!!!!!!!!!!!1C is %d\n", c);
             if(c > 7000){
 //            	if(guest_current_vmid()==0)
             		changeGuestMode(37, current_regs) ;
-            printH("cDDDDDDDDDDDDDDDDDDDDDDDDDDDD is 1000\n");
-            if(c > 15000)
-            	c =7000;
+//            printH("cDDDDDDDDDDDDDDDDDDDDDDDDDDDD is 1000\n");
+            if(c > 12000) {
+            		c = 7000;
+//            	regs->pc = 0x80000000;
+//            	regs->cpsr = regs->cpsr & ~(0x1 << 5);
+//            	regs->cpsr = regs->cpsr | (0x1 << 7);
+//            	regs->cpsr = regs->cpsr | (0x1 << 8);
+//            //    target->regs.cpsr = target->regs.cpsr & ~(0x1F);
+//
+//            	regs->cpsr = regs->cpsr & ~(0x1F);
+//            	regs->cpsr = regs->cpsr | 0x13;
+//
+//            	c = 0;
+////            	c =7000;
+            }
             }
             c++;
         }
@@ -462,7 +478,8 @@ hvmm_status_t interrupt_init(struct guest_virqmap *virqmap)
         if (ret)
             printh("host initial failed:'%s'\n", _interrupt_module.name);
     }
-
+    _host_ops->enable(39);
+    _host_ops->enable(38);
     /* guest_interrupt_init() */
 //    if (_guest_ops->init) {
 //        ret = _guest_ops->init();

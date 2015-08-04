@@ -142,6 +142,25 @@ static hvmm_status_t gic_init_baseaddr(uint32_t *va_base)
         _gic.ba_gicd = (uint32_t *)(_gic.baseaddr + GIC_OFFSET_GICD);
         _gic.ba_gicc = (uint32_t *)(_gic.baseaddr + GIC_OFFSET_GICC);
         result = HVMM_STATUS_SUCCESS;
+    } else if ((midr & MIDR_MASK_PPN) == (0xC07 << 4)) {
+        /* fall-back to periphbase addr from cbar */
+        if (va_base == 0) {
+            va_base = (uint32_t *)(uint32_t)(gic_periphbase_pa() & \
+                    0x00000000FFFFFFFFULL);
+        }
+        uart_print("Cortex-A7 Unsupported GICv2");
+        uart_print("\n\r");
+        _gic.baseaddr = (uint32_t) va_base;
+        uart_print("cbar:");
+        uart_print_hex32(_gic.baseaddr);
+        uart_print("\n\r");
+        _gic.ba_gicd = (uint32_t *)(_gic.baseaddr + GIC_OFFSET_GICD);
+        _gic.ba_gicc = (uint32_t *)(_gic.baseaddr + GIC_OFFSET_GICC);
+//        _gic.ba_gich = (uint32_t *)(_gic.baseaddr + GIC_OFFSET_GICH);
+//        _gic.ba_gicv = (uint32_t *)(_gic.baseaddr + GIC_OFFSET_GICV);
+//        _gic.ba_gicvi = (uint32_t *)(_gic.baseaddr + GIC_OFFSET_GICVI);
+        result = HVMM_STATUS_SUCCESS;
+
     } else {
         uart_print("GICv2 Unsupported\n\r");
         uart_print("midr.ppn:");
