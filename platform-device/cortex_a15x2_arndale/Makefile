@@ -62,7 +62,7 @@ OBJS 		+=	$(COMMON_SOURCE_DIR)/log/string.o	\
 
 LD_SCRIPT	= model.lds.S
 
-OBJS 		+= drivers/uart/uart_print.o	\
+OBJS 		+= drivers/uart/pl011.o	\
 	drivers/gpio/gpio.o	\
 	drivers/mct/mct.o	\
 	drivers/pwm/pwm.o

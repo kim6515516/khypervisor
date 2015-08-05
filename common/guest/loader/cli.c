@@ -1,8 +1,8 @@
 #include <cli.h>
 #include <guestloader_common.h>
 #include <log/uart_print.h>
-#include <gdb_stub.h>
-#include <guest_monitor.h>
+//#include <gdb_stub.h>
+//#include <guest_monitor.h>
 #define NUM_CMD 4
 /* Guest Loader's command line interface command type. */
 enum cmd_type {

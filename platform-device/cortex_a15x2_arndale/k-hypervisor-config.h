@@ -2,6 +2,19 @@
 #define KHYPERVISOR_CONFIG_H
 
 /*
+ *
+ * RPI 2
+ *
+ */
+
+#define PERIPHERAL_BASE 0x3F000000 // Raspberry Pi 2 Peripheral Base Address
+#define UART0_BASE 0x201000 // 0x??201000 base address of UART0
+#define DR 0x00 // 0x??201000 data register
+#define FR 0x18 // 0x??201018 flag register
+#define FR_TXFF 1 << 5 // Transmit FIFO full
+#define FR_RXFE 1 << 4 // Receive FIFO empty
+
+/*
  *  BOARD param
  */
 #define CFG_BOARD_ARNDALE
@@ -45,9 +58,10 @@
 #define CFG_MEMMAP_PHYS_START      0x40000000
 #define CFG_MEMMAP_PHYS_SIZE       0x7FFFFFFF
 #define CFG_MEMMAP_PHYS_END        (CFG_MEMMAP_PHYS_START+CFG_MEMMAP_PHYS_SIZE)
-#define CFG_MEMMAP_MON_OFFSET      0xB0000000
-#define CFG_MEMMAP_GUEST0_OFFSET   0x40000000
-#define CFG_MEMMAP_GUEST1_OFFSET   0x80000000
+
+#define CFG_MEMMAP_MON_OFFSET      0x00008000
+#define CFG_MEMMAP_GUEST0_OFFSET   0x04000000
+#define CFG_MEMMAP_GUEST1_OFFSET   0x08000000
 #define CFG_MEMMAP_GUEST2_OFFSET   0x90000000
 #define CFG_MEMMAP_GUEST3_OFFSET   0xA0000000
 #define CFG_GUEST_START_ADDRESS    0x40000000
