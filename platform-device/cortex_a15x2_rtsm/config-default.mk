@@ -22,5 +22,6 @@ SYSTEM ?= vexpress
 #CPPFLAGS	+= -DSMP
 #CPPFLAGS	+= -D_MON_
 #CPPFLAGS	+= -D_CPUISOLATED_
-CPPFLAGS	+= -mcpu=cortex-a15 -marm
+CPPFLAGS	+= -D_RPI_
+CPPFLAGS	+= -mcpu=cortex-a7 -marm
 CPPFLAGS	+= -g

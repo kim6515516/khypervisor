@@ -6,7 +6,7 @@
 #include <vdev.h>
 #include <smp.h>
 
-#define DEBUG
+#define DEBUG 1
 #include <log/print.h>
 #include <interrupt.h>
 /**\defgroup ARM
@@ -75,18 +75,25 @@ static void _trap_dump_bregs(void)
 {
     uint32_t spsr, lr, sp;
 
-    printh(" - banked regs\n");
+    printH(" - banked regs\n");
     asm volatile(" mrs     %0, sp_usr\n\t" : "=r"(sp) : : "memory", "cc");
     asm volatile(" mrs     %0, lr_usr\n\t" : "=r"(lr) : : "memory", "cc");
-    printh(" - usr: sp:%x lr:%x\n", sp, lr);
+    printH(" - usr: sp:%x lr:%x\n", sp, lr);
     asm volatile(" mrs     %0, spsr_svc\n\t" : "=r"(spsr) : : "memory", "cc");
     asm volatile(" mrs     %0, sp_svc\n\t" : "=r"(sp) : : "memory", "cc");
     asm volatile(" mrs     %0, lr_svc\n\t" : "=r"(lr) : : "memory", "cc");
-    printh(" - svc: spsr:%x sp:%x lr:%x\n", spsr, sp, lr);
+    printH(" - svc: spsr:%x sp:%x lr:%x\n", spsr, sp, lr);
     asm volatile(" mrs     %0, spsr_irq\n\t" : "=r"(spsr) : : "memory", "cc");
     asm volatile(" mrs     %0, sp_irq\n\t" : "=r"(sp) : : "memory", "cc");
     asm volatile(" mrs     %0, lr_irq\n\t" : "=r"(lr) : : "memory", "cc");
-    printh(" - irq: spsr:%x sp:%x lr:%x\n", spsr, sp, lr);
+    printH(" - irq: spsr:%x sp:%x lr:%x\n", spsr, sp, lr);
+
+    printH("vbar : %x\n", read_vbar());
+    printH("ttbr0 : %x\n", read_ttbr0());
+    printH("ttbr1 : %x\n", read_ttbr1());
+    printH("ttbcr : %x\n", read_ttbcr());
+    printH("sctlr : %x\n", read_sctlr());
+
 }
 
 /*
@@ -153,26 +160,57 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
 
     switch (ec) {
     case TRAP_EC_ZERO_UNKNOWN:
+    	printH("TRAP_EC_ZERO_UNKNOWN\n");
+    	break;
     case TRAP_EC_ZERO_WFI_WFE:
+    	printH("TRAP_EC_ZERO_WFI_WFE\n");
+    	break;
     case TRAP_EC_ZERO_MCR_MRC_CP15:
+    	printH("TRAP_EC_ZERO_MCR_MRC_CP15\n");
+    	break;
     case TRAP_EC_ZERO_MCRR_MRRC_CP15:
+    	printH("TRAP_EC_ZERO_MCRR_MRRC_CP15\n");
+    	break;
     case TRAP_EC_ZERO_MCR_MRC_CP14:
+    	printH("TRAP_EC_ZERO_MCR_MRC_CP14\n");
+    	break;
     case TRAP_EC_ZERO_LDC_STC_CP14:
+    	printH("TRAP_EC_ZERO_LDC_STC_CP14\n");
+    	break;
     case TRAP_EC_ZERO_HCRTR_CP0_CP13:
+    	printH("TRAP_EC_ZERO_HCRTR_CP0_CP13\n");
+    	break;
     case TRAP_EC_ZERO_MRC_VMRS_CP10:
+    	printH("TRAP_EC_ZERO_MRC_VMRS_CP10\n");
+    	break;
     case TRAP_EC_ZERO_BXJ:
+    	printH("TRAP_EC_ZERO_BXJ\n");
+    	break;
     case TRAP_EC_ZERO_MRRC_CP14:
+    	printH("TRAP_EC_ZERO_MRRC_CP14\n");
+    	break;
     case TRAP_EC_NON_ZERO_SVC:
+    	printH("TRAP_EC_NON_ZERO_SVC\n");
+    	break;
     case TRAP_EC_NON_ZERO_SMC:
+    	printH("TRAP_EC_NON_ZERO_SMC\n");
+    	break;
     case TRAP_EC_NON_ZERO_PREFETCH_ABORT_FROM_OTHER_MODE:
+    	printH("TRAP_EC_NON_ZERO_PREFETCH_ABORT_FROM_OTHER_MODE\n");
+    	break;
     case TRAP_EC_NON_ZERO_PREFETCH_ABORT_FROM_HYP_MODE:
+    	printH("TRAP_EC_NON_ZERO_PREFETCH_ABORT_FROM_HYP_MODE\n");
+    	break;
     case TRAP_EC_NON_ZERO_DATA_ABORT_FROM_HYP_MODE:
+    	printH("TRAP_EC_NON_ZERO_DATA_ABORT_FROM_HYP_MODE\n");
         level = VDEV_LEVEL_HIGH;
         break;
     case TRAP_EC_NON_ZERO_HVC:
+    	printH("TRAP_EC_NON_ZERO_HVC\n");
         level = VDEV_LEVEL_MIDDLE;
         break;
     case TRAP_EC_NON_ZERO_DATA_ABORT_FROM_OTHER_MODE:
+    	printH("TRAP_EC_NON_ZERO_DATA_ABORT_FROM_OTHER_MODE\n");
         level = VDEV_LEVEL_LOW;
         break;
     default:

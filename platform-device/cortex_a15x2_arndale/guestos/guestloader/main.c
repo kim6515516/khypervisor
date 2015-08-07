@@ -20,16 +20,16 @@ volatile int autoboot;
 static void guestloader_init(void)
 {
     /* Initializes serial */
-    uart_init();
+//    uart_init();
     /* Initializes GIC */
-    gic_init();
+//    gic_init();
 #ifdef _MON_
     monitoring_init();
 #endif
     /* Ready to accept irqs with GIC. Enable it now */
-    irq_enable();
+//    irq_enable();
     /* Initializes timer */
-    timer_init();
+//    timer_init();
     /* Initializes autoboot flag */
     autoboot = 0;
 }
@@ -72,16 +72,18 @@ void main(int boot_status)
     /* Show Hypervisor Banner */
     uart_print(BANNER_STRING);
 
+    guestloader_autoboot();
+
 #ifdef MONITOR_GUEST
     guestloader_cliboot();
 #endif
     /* Auto boot or CLI boot */
-    while (1) {
-        /* Auto boot */
-        if (autoboot)
-            guestloader_autoboot();
-        /* Use CLI, if press any key */
-        else if (uart_tst_fifo())
-            guestloader_cliboot();
-    }
+//    while (1) {
+//        /* Auto boot */
+//        if (autoboot)
+//            guestloader_autoboot();
+//        /* Use CLI, if press any key */
+//        else if (uart_tst_fifo())
+//            guestloader_cliboot();
+//    }
 }

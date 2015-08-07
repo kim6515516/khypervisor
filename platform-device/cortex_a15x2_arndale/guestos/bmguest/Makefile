@@ -28,7 +28,7 @@ COMMON_OBJS = $(COMMON_SOURCE_DIR)/guest/core/c_start.o \
 
 OBJS = boot.o main.o $(COMMON_OBJS)
 
-OBJS += drivers/uart.o drivers/pwm_timer.o
+OBJS += drivers/pl011.o drivers/pwm_timer.o
 
 GUESTIMG 	= bmguest.axf
 GUESTBIN	= bmguest.bin

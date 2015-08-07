@@ -114,7 +114,7 @@ hvmm_status_t guest_perform_switch(struct arch_regs *regs)
          * If the scheduler is not already running, launch default
          * first guest. It occur in initial time.
          */
-        printh("context: launching the first guest\n");
+        printH("context: launching the first guest\n");
 
         result = perform_switch(0, _next_guest_vmid[cpu]);
         /* DOES NOT COME BACK HERE */
@@ -137,7 +137,7 @@ void guest_sched_start(void)
     struct guest_struct *guest = 0;
     uint32_t cpu = smp_processor_id();
 
-    printh("[hyp] switch_to_initial_guest:\n");
+    printH("[hyp] switch_to_initial_guest:\n");
     /* Select the first guest context to switch to. */
     _current_guest_vmid[cpu] = VMID_INVALID;
     if (cpu)
@@ -313,9 +313,9 @@ hvmm_status_t guest_init()
     int guest_count;
     int start_vmid = 0;
     uint32_t cpu = smp_processor_id();
-    printh("[hyp] init_guests: enter\n");
+    printH("[hyp] init_guests: enter\n");
     /* Initializes 2 guests */
-    guest_count = 4; //num_of_guest(cpu);
+    guest_count = 2; //num_of_guest(cpu);
 
 #ifdef _CPUISOLATED_
     if (cpu)
@@ -339,16 +339,16 @@ hvmm_status_t guest_init()
             _guest_module.ops->init(guest, regs);
     }
 
-    printh("[hyp] init_guests: return\n");
+    printH("[hyp] init_guests: return\n");
 
     /* 100Mhz -> 1 count == 10ns at RTSM_VE_CA15, fast model*/
-    timer.interval_us = GUEST_SCHED_TICK;
-    timer.callback = &guest_schedule;
-
-    result = timer_set(&timer, HOST_TIMER);
+//    timer.interval_us = GUEST_SCHED_TICK;
+//    timer.callback = &guest_schedule;
+//
+//    result = timer_set(&timer, HOST_TIMER);
 
     if (result != HVMM_STATUS_SUCCESS)
-        printh("[%s] timer startup failed...\n", __func__);
+        printH("[%s] timer startup failed...\n", __func__);
 
     return result;
 }
