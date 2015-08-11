@@ -239,6 +239,36 @@ __mon_switch_to_guest_context:    @ struct arch_regs *r0
 
 
 
+.globl PUT32
+PUT32:
+    str r1,[r0]
+    bx lr
+
+.globl PUT16
+PUT16:
+    strh r1,[r0]
+    bx lr
+
+.globl PUT8
+PUT8:
+    strb r1,[r0]
+    bx lr
+
+.globl GET32
+GET32:
+    ldr r0,[r0]
+    bx lr
+
+.globl GETPC
+GETPC:
+    mov r0,lr
+    bx lr
+
+.globl BRANCHTO
+BRANCHTO:
+    bx r0
+
+
 
 put_str:
 	ldr r3, [r0, #FR] // get flag register

@@ -23,9 +23,9 @@ static void guestloader_init(void)
 //    uart_init();
     /* Initializes GIC */
 //    gic_init();
-#ifdef _MON_
-    monitoring_init();
-#endif
+//#ifdef _MON_
+//    monitoring_init();
+//#endif
     /* Ready to accept irqs with GIC. Enable it now */
 //    irq_enable();
     /* Initializes timer */
@@ -41,7 +41,7 @@ void guestloader_flag_autoboot(int flag)
 
 static void guestloader_autoboot(void)
 {
-    timer_disable();
+//    timer_disable();
     cli_exec_cmd(BOOTCMD);
 }
 
@@ -49,7 +49,7 @@ static void guestloader_cliboot(void)
 {
     char input_cmd[MAX_CMD_STR_SIZE];
     /* Disable timer for guest os */
-    timer_disable();
+//    timer_disable();
 
     while (1) {
         uart_print(PROMPT);
@@ -60,18 +60,16 @@ static void guestloader_cliboot(void)
 
 void main(int boot_status)
 {
-#if _SMP_
-    while (1)
-        ;
-#endif
+
     /*If Booting status is reboot, run this function. */
-    if (boot_status)
-        reboot();
+//    if (boot_status)
+//        reboot();
     /* Initializes guestloder */
     guestloader_init();
     /* Show Hypervisor Banner */
     uart_print(BANNER_STRING);
-
+//    while(1)
+//    	;
     guestloader_autoboot();
 
 #ifdef MONITOR_GUEST

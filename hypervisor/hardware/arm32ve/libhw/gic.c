@@ -395,3 +395,133 @@ uint32_t gic_get_irq_number(void)
     return irq;
 }
 
+#define BIT(x) (1UL << x)
+/* Put the bank and irq (32 bits) into the hwirq */
+#define MAKE_HWIRQ(b, n)	(((b) << 5) | (n))
+#define HWIRQ_BANK(i)		(i >> 5)
+#define HWIRQ_BIT(i)		BIT(i & 0x1f)
+
+#define NR_IRQS_BANK0		8
+#define BANK0_HWIRQ_MASK	0xff
+/* Shortcuts can't be disabled so any unknown new ones need to be masked */
+#define SHORTCUT1_MASK		0x00007c00
+#define SHORTCUT2_MASK		0x001f8000
+#define SHORTCUT_SHIFT		10
+#define BANK1_HWIRQ		BIT(8)
+#define BANK2_HWIRQ		BIT(9)
+#define BANK0_VALID_MASK	(BANK0_HWIRQ_MASK | BANK1_HWIRQ | BANK2_HWIRQ \
+					| SHORTCUT1_MASK | SHORTCUT2_MASK)
+
+#define REG_FIQ_CONTROL		0x0c
+#define REG_FIQ_ENABLE		0x80
+#define REG_FIQ_DISABLE		0
+
+#define NR_BANKS		3
+#define IRQS_PER_BANK		32
+#define NUMBER_IRQS		MAKE_HWIRQ(NR_BANKS, 0)
+#define FIQ_START		(NR_IRQS_BANK0 + MAKE_HWIRQ(NR_BANKS - 1, 0))
+//
+//static int reg_pending[]  = { 0x00, 0x04, 0x08 };
+//static int reg_enable[]  = { 0x18, 0x10, 0x14 };
+//static int reg_disable[]  = { 0x24, 0x1c, 0x20 };
+//static int bank_irqs[] *= { 8, 32, 32 };
+
+static const uint32_t shortcuts[] = {
+	7, 9, 10, 18, 19,		/* Bank 1 */
+	21, 22, 23, 24, 25, 30		/* Bank 2 */
+};
+
+/*
+ * ffs -- vax ffs instruction
+ */
+uint32_t ffs(uint32_t mask)
+{
+	uint32_t bit = 0;
+
+	if (mask == 0)
+		return (0);
+	for (bit = 1; !(mask & 1); bit++)
+		mask >>= 1;
+	return (bit);
+}
+
+
+
+#define readl(b)                __readl(b)
+#define readl_relaxed(addr)     readl(addr)
+
+
+
+static uint32_t armctrl_handle_bank(int bank)
+{
+	uint32_t stat, irq = -1;
+//	printH("%s irq : %d\n",__func__, irq);
+	while(stat = *((volatile uint32_t*)(0x3F00B000 + 0x200 + bank * 0x04))){  // ((stat = readl_relaxed(intc.pending[bank]))) {
+		irq = MAKE_HWIRQ(bank, ffs(stat) - 1);
+//		handle_IRQ(irq_linear_revmap(intc.domain, irq), regs);
+//		printH("%s irq : %d\n",__func__, irq);
+		return irq;
+
+	}
+	return irq;
+}
+
+static uint32_t armctrl_handle_shortcut(int bank, uint32_t stat)
+{
+	uint32_t irq = MAKE_HWIRQ(bank, shortcuts[ffs(stat >> SHORTCUT_SHIFT) - 1]);
+//	handle_IRQ(irq_linear_revmap(intc.domain, irq), regs);
+//	printH("%s irq : %d\n",__func__, irq);
+	return irq;
+}
+
+static uint32_t bcm2835_handle_irq(void)
+{
+	uint32_t stat;
+	uint32_t irq = -1;
+//	printH("START: %s irq : %d\n",__func__, irq);
+	while ((stat = (*((volatile uint32_t*)(0x3F00B000 + 0x200)) & BANK0_VALID_MASK))) {
+		if (stat & BANK0_HWIRQ_MASK) {
+			irq = MAKE_HWIRQ(0, ffs(stat & BANK0_HWIRQ_MASK) - 1);
+//			printH("%s irq : %d\n",__func__, irq);
+//			handle_IRQ(irq_linear_revmap(intc.domain, irq), regs);
+			return irq;
+		} else if (stat & SHORTCUT1_MASK) {
+			irq = armctrl_handle_shortcut(1,  stat & SHORTCUT1_MASK);
+			return irq;
+		} else if (stat & SHORTCUT2_MASK) {
+			irq = armctrl_handle_shortcut(2,  stat & SHORTCUT2_MASK);
+			return irq;
+		} else if (stat & BANK1_HWIRQ) {
+			irq = armctrl_handle_bank(1);
+			return irq;
+		} else if (stat & BANK2_HWIRQ) {
+			irq = armctrl_handle_bank(2);
+			return irq;
+		} else {
+			//
+			irq = -1;
+		}
+	}
+	return irq;
+}
+
+uint32_t rpi2_get_irq_number(void)
+{
+
+//	uint32_t stat = 0;
+//	uint32_t hwirq = -1;
+//	stat = *((volatile uint32_t*)(0x3F00B000 + 0x200));
+//
+////	hwirq = ffs(stat) - 1;
+//	if( (stat & (1<<9))) { // pending register2
+//		hwirq = *((volatile uint32_t*)(0x3F00B000 + 0x208));
+//		printH("pending register2 : %d\n", hwirq);
+//	}
+//	else if ( (stat & (1<<8))) { // pending register1
+//		hwirq = *((volatile uint32_t*)(0x3F00B000 + 0x204));
+//		printH("pending register1 : %d\n", hwirq);
+//	}
+
+	return bcm2835_handle_irq();
+}
+

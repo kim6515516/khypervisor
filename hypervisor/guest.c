@@ -71,6 +71,7 @@ hvmm_status_t perform_switch(struct arch_regs *regs, vmid_t next_vmid)
     if (!cpu)
         vdev_restore(_current_guest_vmid[cpu]);
 
+//    printH("guest pc: %x\n", regs->pc);
     interrupt_restore(_current_guest_vmid[cpu]);
     memory_restore(_current_guest_vmid[cpu]);
     guest_restore(guest, regs);

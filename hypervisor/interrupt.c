@@ -323,10 +323,10 @@ void changeGuestMode(int irq, void *current_regs)
     printH("changeGuest elr_hyp : %x\n", target->context.regs_banked.elr_hyp);
     target->context.regs_banked.lr_irq = target->regs.pc + 4;
 
-    if (guest_current_vmid() == 0)  // linux
-    	target->regs.pc = 0xffff0018;
-    else // bm guest
-    	target->regs.pc = 0xffff0018;
+//    if (guest_current_vmid() == 0)  // linux
+//    	target->regs.pc = 0xffff0018;
+//    else // bm guest
+    	target->regs.pc = 0xffff0038;
 //    target->regs.gpr[13] = 0x80B55FA8;
 //    target->regs.lr = target->regs.pc - 4;
 //    target->regs.pc = 0x8000DA00;
@@ -352,10 +352,27 @@ void changeGuestMode(int irq, void *current_regs)
 //    _mon_switch_to_guest_context(&target->regs);
 }
 int c  =0 ;
+
+
+#define CS      0x3F003000
+#define CLO     0x3F003004
+#define C0      0x3F00300C
+#define C1      0x3F003010
+#define C2      0x3F003014
+#define C3      0x3F003018
+
+#define INTERVAL 0x10000000
+
+
+#define ENABLE_TIMER_IRQ() PUT32(CS,0x8)
+#define DISABLE_TIMER_IRQ() PUT32(CS,~2);
+
+
 void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 {
     struct arch_regs *regs = (struct arch_regs *)current_regs;
     uint32_t cpu = smp_processor_id();
+    uint32_t rx = 0;
 //    c ++;
 //    if(( irq != 26) || (irq ==30 && c > 10000) ) {
 //    // 	_guest_ops->end(irq);
@@ -363,7 +380,26 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 //    	return;
 //    }
 
-//    printH("isr IRQ : %d\n", irq);
+    if(irq == 0xffffffff)
+    {
+
+        rx=GET32(CLO);
+        rx += INTERVAL;
+        PUT32(C3,rx);
+
+    	if( _guest_module.ops->init)
+    		guest_switchto(sched_policy_determ_next(), 0);
+
+
+    } else
+    	 printH("isr IRQ !!!!!: %x\n", irq);
+
+
+    return;
+
+
+//    changeGuestMode(irq, regs);
+
     if ( irq == 39 || irq == 38 )
     {
     	printH("irq 39\n");
@@ -397,7 +433,7 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 //            if(guest_current_vmid()!=0)
 //            	_guest_ops->end(irq);
 //            else
-            	changeGuestMode(irq, current_regs) ;
+//            	changeGuestMode(irq, current_regs) ;
 //            interrupt_inject_enabled_guest(NUM_GUESTS_STATIC, irq);
         } else {
             /* host irq */

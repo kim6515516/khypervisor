@@ -53,4 +53,5 @@ hvmm_status_t gic_configure_irq(uint32_t irq,
 
 uint32_t gic_get_irq_number(void);
 
+uint32_t rpi2_get_irq_number(void);
 #endif

@@ -75,7 +75,10 @@ static struct memmap_desc guest0_memory_md[] = {
      MEMATTR_NORMAL_OWB | MEMATTR_NORMAL_IWB
     },
     { "uart", 0x3F200000, 0x3F200000, SZ_1M, MEMATTR_DM },
+    { "uart", 0x3FC00000, 0x3FC00000, SZ_1M, MEMATTR_DM },
     { "afdf", 0x3F400000, 0x3F400000, SZ_1M, MEMATTR_DM },
+    { "afdf", 0x3F000000, 0x3F000000, SZ_1M, MEMATTR_DM },
+    { "afdf", 0x35900000, 0x35900000, SZ_1M, MEMATTR_DM },
     {0, 0, 0, 0,  0},
 };
 
@@ -86,6 +89,16 @@ static struct memmap_desc guest1_memory_md[] = {
 	    },
 	    { "uart", 0x3F200000, 0x3F200000, SZ_1M, MEMATTR_DM },
 	    { "afdf", 0x3F400000, 0x3F400000, SZ_1M, MEMATTR_DM },
+//	    { "afdf", 0xFFF00000, 0xFFF00000, SZ_1M, MEMATTR_DM },
+	    {0, 0, 0, 0,  0},
+};
+
+static struct memmap_desc guest1_memory_md_ff[] = {
+    /* 256MB */
+
+	    {"start", 0x00000000, 0, 0x10000000,
+	     MEMATTR_NORMAL_OWB | MEMATTR_NORMAL_IWB
+	    },
 	    {0, 0, 0, 0,  0},
 };
 
@@ -115,17 +128,17 @@ static struct memmap_desc guest3_memory_md[] = {
 
 /* Memory Map for Guest 0 */
 static struct memmap_desc *guest0_mdlist[] = {
-		guest0_memory_md,   /* 0x0000_0000 */
-		guest_md_empty,   /* 0x4000_0000 */
-    guest_md_empty,
-    guest_md_empty,     /* 0xC000_0000 PA:0x40000000*/
+	guest0_memory_md,   /* 0x0000_0000 */  // 고쳐야함. ......... 데헷.
+	guest1_memory_md_ff,   /* 0x4000_0000 */
+	guest1_memory_md_ff,
+	guest1_memory_md_ff,     /* 0xC000_0000 PA:0x40000000*/
     0
 };
 
 /* Memory Map for Guest 1 */
 static struct memmap_desc *guest1_mdlist[] = {
-		guest1_memory_md,
-		guest_md_empty,
+	guest1_memory_md,
+	guest_md_empty,
     guest_md_empty,
     guest_md_empty,
     0
@@ -266,16 +279,19 @@ int main_cpu_init()
     /* Initialize PIRQ to VIRQ mapping */
     setup_interrupt();
     /* Initialize Interrupt Management */
-//    if (interrupt_init(_guest_virqmap))
-//        printh("[start_guest] interrupt initialization failed...\n");
+    if (interrupt_init(_guest_virqmap))
+        printh("[start_guest] interrupt initialization failed...\n");
 
 #ifdef _SMP_
     printH("wake up...other CPUs\n");
     writel((unsigned int)init_secondary, 0x02020000);
 #endif
 
+    enable_irqs();
     /* Initialize Timer */
-    setup_timer();
+
+
+//    setup_timer();
 //    if (timer_init(_timer_irq))
 //        printh("[start_guest] timer initialization failed...\n");
 
@@ -291,8 +307,10 @@ int main_cpu_init()
     if (basic_tests_run(PLATFORM_BASIC_TESTS))
         printh("[start_guest] basic testing failed...\n");
 
+
     /* Print Banner */
     printH("%s", BANNER_STRING);
+    rpi2_timer_init();
 
     /* Switch to the first guest */
     guest_sched_start();
@@ -333,6 +351,8 @@ void secondary_cpu_init(uint32_t cpu)
     /* Initialize Virtual Devices */
     if (vdev_init())
         printh("[start_guest] virtual device initialization failed...\n");
+
+
 
     /* Switch to the first guest */
     guest_sched_start();

@@ -1,5 +1,4 @@
 #include "pl011.h"
-
 #include <include/asm_io.h>
 #include <k-hypervisor-config.h>
 

@@ -29,11 +29,11 @@ SECTIONS
  guest_end = . + 0x200000;
 #endif
 
- system_map_start = 0x40D00000;
+ system_map_start = 0x00D00000;
  . = system_map_start;
  system_map_end = .;
 
- shared_memory_start = 0x4EC00000;
+ shared_memory_start = 0x0EC00000;
  . = shared_memory_start;
  shared_memory_end = . + 0x400000;
 
@@ -67,7 +67,7 @@ guestloader_stacktop_irq = .;
 . = PHYS_STACK + 0x00800000;
 guestloader_stacklimit_irq = .;
 
- restore_start = 0x70000000;
+ restore_start = 0x10000000;
  restore_guest_start = restore_start + 0x00500000;
  restore_guest_end = restore_guest_start + (guest_end - guest_start);
  restore_end = restore_start + (guestloader_end - loader_start);

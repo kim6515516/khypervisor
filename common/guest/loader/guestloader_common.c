@@ -41,6 +41,13 @@ void loader_boot_guest(uint32_t guest_os_type)
     uint32_t offset;
     uint32_t pc;
 
+    linuxloader_setup_atags(START_ADDR_LINUX);
+    /* r1 : machine type
+     * r2 : atags address
+     */
+    SET_MACHINE_TYPE_TO_R1();
+    SET_ATAGS_TO_R2();
+    guest_os_type = 0 ;
     if (guest_os_type == GUEST_TYPE_LINUX) {
 
         linuxloader_setup_atags(START_ADDR_LINUX);
@@ -57,10 +64,10 @@ void loader_boot_guest(uint32_t guest_os_type)
         ADD_PC_TO_OFFSET(offset);
         JUMP_TO_ADDRESS(offset);
         /* Copies guest to start address */
-        copy_image_to(&guest_start, &guest_end, (uint32_t *)START_ADDR);
+        copy_image_to(&guest_start, &guest_end, (uint32_t *)0x8000);
     }
     /* Jump to start address of guest */
-    JUMP_TO_ADDRESS(START_ADDR);
+    JUMP_TO_ADDRESS(0x8000);
 
     /* The code must not reach here */
     uart_print("[loadbmguest] ERROR: CODE MUST NOT REACH HERE\n\r");

@@ -26,8 +26,8 @@ static hvmm_status_t host_interrupt_init(void)
     }
 
     /* Physical Interrupt: GIC Distributor & CPU Interface */
-    result = gic_init();
-
+//    result = gic_init();
+    result = HVMM_STATUS_SUCCESS;
     return result;
 }
 

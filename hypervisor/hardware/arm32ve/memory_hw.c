@@ -374,12 +374,12 @@ static union lpaed *host_memory_get_l3_table_entry(unsigned long virt,
     int maxsize = ((HMM_L2_PTE_NUM * HMM_L3_PTE_NUM) - \
             ((l2_index + 1) * (l3_index + 1)) + 1);
     if (maxsize < npages) {
-        printH("%s[%d] : Map size \"pages\" is exceeded memory size\n",
+        printh("%s[%d] : Map size \"pages\" is exceeded memory size\n",
                 __func__, __LINE__);
         if (maxsize > 0)
-            printH("%s[%d] : Available pages are %d\n", maxsize);
+            printh("%s[%d] : Available pages are %d\n", maxsize);
         else
-            printH("%s[%d] : Do not have available pages for map\n");
+            printh("%s[%d] : Do not have available pages for map\n");
         return 0;
     }
     return &_hmm_pgtable_l3[l2_index][l3_index];
@@ -450,7 +450,7 @@ static void *host_memory_sbrk(unsigned int incr)
         required_addr = mm_break - last_valid_address;
         for (; required_addr > 0x0; required_addr -= 0x1000) {
             if (last_valid_address + 0x1000 > HEAP_END_ADDR) {
-                printH("%s[%d] required address is exceeded heap memory size\n",
+                printh("%s[%d] required address is exceeded heap memory size\n",
                         __func__, __LINE__);
                 return (void *)-1;
             }
@@ -585,7 +585,7 @@ static void guest_memory_ttbl3_map(union lpaed *ttbl3, uint64_t offset,
 {
     int index_l3 = 0;
     int index_l3_last = 0;
-    printH("%s[%d]: ttbl3:%x offset:%x pte:%x pages:%d, pa:%x\n",
+    printh("%s[%d]: ttbl3:%x offset:%x pte:%x pages:%d, pa:%x\n",
             __func__, __LINE__, (uint32_t) ttbl3, (uint32_t) offset,
             &ttbl3[offset], pages, (uint32_t) pa);
     /* Initialize the address spaces with 'invalid' state */
@@ -702,11 +702,11 @@ static void guest_memory_ttbl2_map(union lpaed *ttbl2, uint64_t va_offset,
     int i;
     HVMM_TRACE_ENTER();
 
-    printH("ttbl2:%x va_offset:%x pa:%x size:%d\n",
+    printh("ttbl2:%x va_offset:%x pa:%x size:%d\n",
             (uint32_t) ttbl2, (uint32_t) va_offset, (uint32_t) pa, size);
     index_l2 = va_offset >> LPAE_BLOCK_L2_SHIFT;
     block_offset = va_offset & LPAE_BLOCK_L2_MASK;
-    printH("- index_l2:%d block_offset:%x\n",
+    printh("- index_l2:%d block_offset:%x\n",
             index_l2, (uint32_t) block_offset);
     /* head < BLOCK */
     if (block_offset) {
@@ -728,7 +728,7 @@ static void guest_memory_ttbl2_map(union lpaed *ttbl2, uint64_t va_offset,
     if (size > 0) {
         num_blocks = size >> LPAE_BLOCK_L2_SHIFT;
         index_l2_last = index_l2 + num_blocks;
-        printH("- index_l2_last:%d num_blocks:%d size:%d\n", index_l2_last, (uint32_t) num_blocks, size);
+        printh("- index_l2_last:%d num_blocks:%d size:%d\n", index_l2_last, (uint32_t) num_blocks, size);
         for (i = index_l2; i < index_l2_last; i++) {
             lpaed_guest_stage2_enable_l2_table(&ttbl2[i]);
             guest_memory_ttbl3_map(TTBL_L3(ttbl2, i), 0,
@@ -740,7 +740,7 @@ static void guest_memory_ttbl2_map(union lpaed *ttbl2, uint64_t va_offset,
     /* tail < BLOCK */
     if (size > 0) {
         pages = size >> LPAE_PAGE_SHIFT;
-        printH("- pages:%d size:%d\n", pages, size);
+        printh("- pages:%d size:%d\n", pages, size);
         if (pages) {
             ttbl3 = TTBL_L3(ttbl2, index_l2_last);
             guest_memory_ttbl3_map(ttbl3, 0, pages, pa, mattr);
@@ -766,7 +766,7 @@ static void guest_memory_ttbl2_init_entries(union lpaed *ttbl2)
     union lpaed *ttbl3;
     for (i = 0; i < VMM_L2_PTE_NUM; i++) {
         ttbl3 = TTBL_L3(ttbl2, i);
-        printH("ttbl2[%d]:%x ttbl3[]:%x\n", i, &ttbl2[i], ttbl3);
+        printh("ttbl2[%d]:%x ttbl3[]:%x\n", i, &ttbl2[i], ttbl3);
         lpaed_guest_stage2_conf_l2_table(&ttbl2[i],
                 (uint64_t)((uint32_t) ttbl3), 0);
         for (j = 0; j < VMM_L2_PTE_NUM; j++)
@@ -789,9 +789,9 @@ static void guest_memory_init_ttbl2(union lpaed *ttbl2, struct memmap_desc *md)
 {
     int i = 0;
     HVMM_TRACE_ENTER();
-    printH(" - ttbl2:%x\n", (uint32_t) ttbl2);
+    printh(" - ttbl2:%x\n", (uint32_t) ttbl2);
     if (((uint64_t)((uint32_t) ttbl2)) & 0x0FFFULL)
-        printH(" - error: invalid ttbl2 address alignment\n");
+        printh(" - error: invalid ttbl2 address alignment\n");
 
     /* construct l2-l3 table hirerachy with invalid pages */
     guest_memory_ttbl2_init_entries(ttbl2);
@@ -944,7 +944,7 @@ static hvmm_status_t guest_memory_set_vmid_ttbl(vmid_t vmid, union lpaed *ttbl)
      * VTTBR.BADDR = ttbl
      */
     vttbr = read_vttbr();
-#if 1 /* ignore message due to flood log message */
+#if 0 /* ignore message due to flood log message */
     uart_print("current vttbr:");
     uart_print_hex64(vttbr);
     uart_print("\n\r");
@@ -955,7 +955,7 @@ static hvmm_status_t guest_memory_set_vmid_ttbl(vmid_t vmid, union lpaed *ttbl)
     vttbr |= (uint32_t) ttbl & VTTBR_BADDR_MASK;
     write_vttbr(vttbr);
     vttbr = read_vttbr();
-#if 1 /* ignore message due to flood log message */
+#if 0 /* ignore message due to flood log message */
     uart_print("changed vttbr:");
     uart_print_hex64(vttbr);
     uart_print("\n\r");

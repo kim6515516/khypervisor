@@ -268,3 +268,10 @@ void gic_interrupt(int fiq, void *pregs)
     #endif
     }
 }
+
+
+void gic_interrupt_rqi(int fiq, void *pregs)
+{
+	 uart_print("recevied irq in guestloader :");
+	 uart_print("\n\r");
+}

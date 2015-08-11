@@ -193,8 +193,8 @@ void linuxloader_setup_atags(uint32_t src)
      */
 /* ramdisk-rtsm */
 
-     "root=/dev/ram rw earlyprintk console=ttyAMA0 "
-     "mem=256M rdinit=/sbin/init";
+//     "root=/dev/ram rw earlyprintk console=ttyAMA0 "
+//     "mem=256M rdinit=/sbin/init";
 
 /* android-arndale board */
     /*
@@ -209,6 +209,10 @@ void linuxloader_setup_atags(uint32_t src)
       "root=/dev/mmcblk1p1   rw ip=dhcp earlyprintk rootwait "
       "console=ttySAC1,115200n8 mem=512M init --no-log";
     */
+
+    		 /* raspberry 2 - ramdisk */
+    	"earlyprintk console=ttyAMA0 rdinit=/sbin/init root=/dev/ram rootwait mem=64M";
+
     /* standard core tag 4k pagesize */
     setup_core_tag((uint32_t *)src, SZ_4K);
     /* commandline setting root device */

@@ -65,7 +65,9 @@ LD_SCRIPT	= model.lds.S
 OBJS 		+= drivers/uart/pl011.o	\
 	drivers/gpio/gpio.o	\
 	drivers/mct/mct.o	\
-	drivers/pwm/pwm.o
+	drivers/pwm/pwm.o \
+	drivers/timer/timer.o \
+	drivers/ic/rpi2_ic.o
 
 INCLUDES    = -I $(HYPERVISOR_SOURCE_DIR)/include -I $(HYPERVISOR_SOURCE_DIR)
 INCLUDES    += -I $(HYPERVISOR_HW_DIR)/include

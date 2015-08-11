@@ -38,7 +38,8 @@ hvmm_status_t _hyp_irq(struct arch_regs *regs)
 {
     uint32_t irq;
 
-    irq = gic_get_irq_number();
+//    irq = gic_get_irq_number();
+    irq = rpi2_get_irq_number();
     interrupt_service_routine(irq, (void *)regs, 0);
     guest_perform_switch(regs);
     return HVMM_STATUS_SUCCESS;

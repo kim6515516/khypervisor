@@ -411,7 +411,6 @@ hvmm_status_t guest_hw_move(struct guest_struct *dst, struct guest_struct *src)
     context_copy_banked(&(dst->context.regs_banked),
             &(src->context.regs_banked));
 }
-
 struct guest_ops _guest_ops = {
     .init = guest_hw_init,
     .save = guest_hw_save,
