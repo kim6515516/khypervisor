@@ -37,6 +37,7 @@ OBJS 		= boot.o	\
 	$(HYPERVISOR_HW_DIR)/memory_hw.o				\
 	$(HYPERVISOR_HW_DIR)/vdev/vdev_cp.o				\
 	$(HYPERVISOR_HW_DIR)/vdev/vdev_gicd.o			\
+	$(HYPERVISOR_HW_DIR)/vdev/vdev_ic_rpi2.o			\
 	$(HYPERVISOR_HW_DIR)/vdev/vdev_hvc_ping.o		\
 	$(HYPERVISOR_HW_DIR)/vdev/vdev_hvc_stay.o		\
 	$(HYPERVISOR_HW_DIR)/vdev/vdev_hvc_yield.o		\

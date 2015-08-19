@@ -505,6 +505,74 @@ static uint32_t bcm2835_handle_irq(void)
 	return irq;
 }
 
+
+#define IC_RPI2_BASE_ADDR			0x3F00B000
+#define IC_OFFSET_BASEIC_PENDING	0x200
+#define IC_OFFSET_PENDING1			0x204
+#define IC_OFFSET_PENDING2			0x208
+#define IC_OFFSET_FIQ_CONTROL		0x20c
+#define IC_OFFSET_ENABLE_IRQS1		0x210
+#define IC_OFFSET_ENABLE_IRQS2		0x214
+#define IC_OFFSET_ENABLE_BASIC_IRQS	0x218
+#define IC_OFFSET_DISABLE_IRQS1		0x21c
+#define IC_OFFSET_DISABLE_IRQS2		0x220
+#define IC_OFFSET_DISABLE_BASIC_IRQS	0x224
+
+#define clz(a) \
+ ({ unsigned long __value, __arg = (a); \
+     asm ("clz\t%0, %1": "=r" (__value): "r" (__arg)); \
+     __value; })
+
+/**
+ *	This is the global IRQ handler on this platform!
+ *	It is based on the assembler code found in the Broadcom datasheet.
+ *
+ **/
+int getIrqNumber() {
+	register unsigned long ulMaskedStatus = -1;
+	register unsigned long ulMaskedStatusTimer = -1;
+	register unsigned long irqNumber = -1;
+
+	ulMaskedStatus =  (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_BASEIC_PENDING)));
+	ulMaskedStatusTimer = (*((volatile unsigned int*) (0x40000060)));
+
+	if (!(ulMaskedStatusTimer & 0x100)) {
+		ulMaskedStatusTimer&=-ulMaskedStatusTimer;
+		/* Some magic to determine number of interrupt to serve */
+		irqNumber=96 + 31 - clz(ulMaskedStatusTimer);
+		return irqNumber;
+	}
+
+	/* Bits 7 through 0 in IRQBasic represent interrupts 64-71 */
+	if (ulMaskedStatus & 0xFF) {
+		irqNumber=64 + 31;
+	}
+
+	/* Bit 8 in IRQBasic indicates interrupts in Pending1 (interrupts 31-0) */
+	else if(ulMaskedStatus & 0x100) {
+		ulMaskedStatus = (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_PENDING1)));
+		irqNumber = 0 + 31;
+	}
+
+	/* Bit 9 in IRQBasic indicates interrupts in Pending2 (interrupts 63-32) */
+	else if(ulMaskedStatus & 0x200) {
+		ulMaskedStatus = (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_PENDING2)));
+		irqNumber = 32 + 31;
+	}
+
+	else {
+		// No interrupt avaialbe, so just return.
+		return -1;
+	}
+
+	/* Keep only least significant bit, in case multiple interrupts have occured */
+	ulMaskedStatus&=-ulMaskedStatus;
+	/* Some magic to determine number of interrupt to serve */
+	irqNumber=irqNumber-clz(ulMaskedStatus);
+	/* Call interrupt handler */
+	return irqNumber;
+}
+
 uint32_t rpi2_get_irq_number(void)
 {
 
@@ -522,6 +590,6 @@ uint32_t rpi2_get_irq_number(void)
 //		printH("pending register1 : %d\n", hwirq);
 //	}
 
-	return bcm2835_handle_irq();
+	return getIrqNumber();
 }
 

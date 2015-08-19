@@ -144,6 +144,7 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
     uint32_t far = read_hdfar();
     uint32_t fipa;
     uint32_t srt;
+    uint32_t data = 0;
     struct arch_vdev_trigger_info info;
     int level = VDEV_LEVEL_LOW;
 
@@ -155,9 +156,14 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
     info.fipa = fipa;
     info.sas = (iss & ISS_SAS_MASK) >> ISS_SAS_SHIFT;
     srt = (iss & ISS_SRT_MASK) >> ISS_SRT_SHIFT;
-    info.value = &(regs->gpr[srt]);
-
-
+//    printH("SRT:%d\n", srt);
+//    asm volatile(" mrs     %0, lr_svc\n\t" : "=r"(lr) : : "memory", "cc");
+    if (srt == 14)
+    	info.value = &data;
+    else if (srt == 15)
+    	info.value = &(regs->pc);
+    else
+    	info.value = &(regs->gpr[srt]);
 
     switch (ec) {
     case TRAP_EC_ZERO_UNKNOWN:
@@ -167,7 +173,10 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
     	printH("TRAP_EC_ZERO_WFI_WFE\n");
     	break;
     case TRAP_EC_ZERO_MCR_MRC_CP15:
-    	printH("TRAP_EC_ZERO_MCR_MRC_CP15\n");
+    	emulate_mcr_mrc_cp15(iss, regs, 0);
+//    	printH("TRAP_EC_ZERO_MCR_MRC_CP15\n");
+    	 guest_perform_switch(regs);
+    	return HYP_RESULT_ERET;
     	break;
     case TRAP_EC_ZERO_MCRR_MRRC_CP15:
     	printH("TRAP_EC_ZERO_MCRR_MRRC_CP15\n");
@@ -211,7 +220,7 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
         level = VDEV_LEVEL_MIDDLE;
         break;
     case TRAP_EC_NON_ZERO_DATA_ABORT_FROM_OTHER_MODE:
-    	printH("TRAP_EC_NON_ZERO_DATA_ABORT_FROM_OTHER_MODE\n");
+//    	printH("TRAP_EC_NON_ZERO_DATA_ABORT_FROM_OTHER_MODE\n");
         level = VDEV_LEVEL_LOW;
         break;
     default:
@@ -221,7 +230,9 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
         guest_dump_regs(regs, __func__);
         goto trap_error;
     }
-//    level = VDEV_LEVEL_LOW;
+    level = VDEV_LEVEL_LOW;
+
+
     vdev_num = vdev_find(level, &info, regs);
     if (vdev_num < 0) {
         printH("[hvc] cann't search vdev number\n\r");
@@ -234,8 +245,13 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
     } else {
         if (vdev_read(level, vdev_num, &info, regs) < 0)
             goto trap_error;
+
+        if(srt == 14)
+        	 asm volatile(" msr lr_svc, %0\n\t" :  : "r"(data) : "memory", "cc"); // in linux
     }
     vdev_post(level, vdev_num, &info, regs);
+
+
 
     guest_perform_switch(regs);
 

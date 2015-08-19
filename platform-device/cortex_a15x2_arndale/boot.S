@@ -148,6 +148,33 @@ start:
     @ for CPU 0 so we can write most of this in C.
 #    ldr     sp, =sec_stacklimit
 
+
+
+	@ make CNTP_* and CNTPCT accessible from PL1
+	mrc	p15, 0, r7, c0, c1, 1	@ ID_PFR1
+	lsr	r7, #16
+	and	r7, #0xf
+	cmp	r7, #1
+	bne	1f
+	mrc	p15, 4, r7, c14, c1, 0	@ CNTHCTL
+	orr	r7, r7, #3		@ PL1PCEN | PL1PCTEN
+	mcr	p15, 4, r7, c14, c1, 0	@ CNTHCTL
+	mov	r7, #0
+	mcrr	p15, 4, r7, r7, c14	@ CNTVOFF
+
+	@ Disable virtual timer in case it was counting
+	mrc	p15, 0, r7, c14, c3, 1	@ CNTV_CTL
+	bic	r7, #1			@ Clear ENABLE
+	mcr	p15, 0, r7, c14, c3, 1	@ CNTV_CTL
+1:
+
+
+
+
+
+
+
+
 #    bl mon_init
     bl mon_to_hyp   // Secure -> NS.Hyp -> hyp_main()
 

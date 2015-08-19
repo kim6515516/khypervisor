@@ -209,6 +209,83 @@ static hvmm_status_t generic_timer_enable(enum generic_timer_type timer_type)
     return result;
 }
 
+static hvmm_status_t generic_ph_timer_enable()
+{
+    uint32_t ctrl;
+    hvmm_status_t result = HVMM_STATUS_UNSUPPORTED_FEATURE;
+
+
+    *((int*)0x40000040 ) = 0x1;  // irq 96
+    *((int*)0x40000040 ) = 0x3;  // irq 97
+    *((int*)0x40000040 ) = 0x5;  // for hypervisor
+    *((int*)0x40000040 ) = 0x000000f;   // irq 99
+
+    ctrl = generic_timer_reg_read(GENERIC_TIMER_REG_HYP_CTRL);
+    ctrl |= GENERIC_TIMER_CTRL_ENABLE;
+    ctrl &= ~GENERIC_TIMER_CTRL_IMASK;
+//    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_CTRL, 0x5);
+//    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_TVAL, 0x2ffff);
+
+//    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_CTRL, 0x7);
+//    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_TVAL, 100000);
+//    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_CTRL, 0x5);
+
+    generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_CTRL, 0x7);
+    generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_TVAL, 0x200000);
+    generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_CTRL, 0x5);
+
+    ctrl = generic_timer_reg_read(GENERIC_TIMER_REG_KCTL);
+    ctrl |= 0x20f;
+    generic_timer_reg_write(GENERIC_TIMER_REG_KCTL, ctrl );
+
+//    generic_timer_reg_write(GENERIC_TIMER_REG_PHYS_CTRL, 0x7);
+//    generic_timer_reg_write(GENERIC_TIMER_REG_PHYS_TVAL, 0x2edff);
+//    generic_timer_reg_write(GENERIC_TIMER_REG_PHYS_CTRL, 0x5);
+
+    result = HVMM_STATUS_SUCCESS;
+
+
+//    ctrl = generic_timer_reg_read(GENERIC_TIMER_REG_HCTL);
+//    	printH("cnthctl:%x \n", ctrl);
+//        ctrl |= 0x67 ;//  1533
+//        generic_timer_reg_write(GENERIC_TIMER_REG_HCTL, ctrl);
+
+//    ctrl = generic_timer_reg_read(GENERIC_TIMER_REG_HYP_CTRL);
+//    ctrl |= GENERIC_TIMER_CTRL_ENABLE;
+//    ctrl &= ~GENERIC_TIMER_CTRL_IMASK;
+//    	generic_timer_reg_write(GENERIC_TIMER_REG_HYP_CTRL, ctrl);
+//
+//        ctrl = generic_timer_reg_read(GENERIC_TIMER_REG_HCTL);
+//        ctrl |= GENERIC_TIMER_CTRL_ENABLE;
+//        ctrl &= ~GENERIC_TIMER_CTRL_IMASK;
+//        generic_timer_reg_write(GENERIC_TIMER_REG_HCTL, ctrl);
+//
+//        ctrl = generic_timer_reg_read(GENERIC_TIMER_REG_PHYS_CTRL);
+//        ctrl |= GENERIC_TIMER_CTRL_ENABLE;
+//        ctrl &= ~GENERIC_TIMER_CTRL_IMASK;
+//        generic_timer_reg_write(GENERIC_TIMER_REG_PHYS_CTRL, ctrl);
+//
+//        result = HVMM_STATUS_SUCCESS;
+////        generic_timer_set_tval(GENERIC_TIMER_REG_PHYS_CTRL, 1000);
+//        generic_timer_reg_write(GENERIC_TIMER_REG_PHYS_TVAL, 1000);
+////        generic_timer_set_tval(GENERIC_TIMER_REG_HCTL, 1000);
+//
+//        generic_timer_reg_write(GENERIC_TIMER_REG_HYP_TVAL, 1000);
+//
+//
+//
+//        ctrl = generic_timer_reg_read(GENERIC_TIMER_REG_VIRT_CTRL);
+//        ctrl |= GENERIC_TIMER_CTRL_ENABLE;
+//        ctrl &= ~GENERIC_TIMER_CTRL_IMASK;
+//        	generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_CTRL, ctrl);
+//
+//        	 generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_TVAL, 1000);
+//
+
+    return result;
+}
+
+
 /** @brief Disable the timer interrupt such as hypervisor timer event
  *  by PL2 physical timer control register.The Timer output signal is not masked.
  */
@@ -241,7 +318,9 @@ static hvmm_status_t timer_disable()
 
 static hvmm_status_t timer_enable()
 {
-    return generic_timer_enable(GENERIC_TIMER_HYP);
+//    return generic_timer_enable(GENERIC_TIMER_HYP);
+	return generic_ph_timer_enable();
+//    return generic_timer_enable(GENERIC_TIMER_VIR);
 }
 
 static hvmm_status_t timer_set_tval(uint64_t tval)

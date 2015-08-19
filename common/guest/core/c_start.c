@@ -50,6 +50,169 @@
 #define NUM_ITERATIONS 10
 #endif
 
+
+
+static volatile unsigned int *irqEnable1 = (unsigned int *) (0x3f00b210);
+static volatile unsigned int *irqEnable2 = (unsigned int *) (0x3f00b214);
+static volatile unsigned int *irqEnableBasic = (unsigned int *) (0x3f00b218);
+static volatile unsigned int *armTimerLoad = (unsigned int *) (0x3f00b400);
+static volatile unsigned int *armTimerValue = (unsigned int *) (0x3f00b404);
+static volatile unsigned int *armTimerControl = (unsigned int *) (0x3f00b408);
+static volatile unsigned int *armTimerIRQClear = (unsigned int *) (0x3f00b40c);
+static volatile unsigned int *armTimerReload = (unsigned int *) (0x3f00b418);
+static volatile unsigned int *arm_timer_div = (unsigned int *) (0x3f00b41C);
+#define SYS_FREQ 0x1000000
+
+void enable_irqs(void) {
+//	uint32_t cpsr = cpsr_read();
+//	cpsr &= ~CPSR_IRQ_DISABLE;
+//	cpsr_write_c(cpsr);
+	unsigned long temp;
+	__asm__ __volatile__("mrs %0, cpsr\n"
+			     "bic %0, %0, #0x80\n"
+			     "msr cpsr_c, %0"
+			     : "=r" (temp)
+			     :
+			     : "memory");
+
+}
+void enable_fiqs(void) {
+	unsigned long temp;
+	__asm__ __volatile__(					\
+	"mrs	%0, cpsr		@ stf\n"		\
+"	bic	%0, %0, #64\n"					\
+"	msr	cpsr_c, %0"					\
+	: "=r" (temp)						\
+	:							\
+	: "memory");
+
+}
+
+#define CS      0x3F003000
+#define CLO     0x3F003004
+#define C0      0x3F00300C
+#define C1      0x3F003010
+#define C2      0x3F003014
+#define C3      0x3F003018
+
+#define INTERVAL 0x10000000
+
+
+#define ENABLE_TIMER_IRQ() PUT32(CS,0x8)
+#define DISABLE_TIMER_IRQ() PUT32(CS,~2);
+
+void
+set_tick_and_enable_timer()
+{
+  unsigned int rx = GET32(CLO);
+  rx += INTERVAL;
+  PUT32(C1,rx);
+
+  ENABLE_TIMER_IRQ();
+}
+
+
+/*
+ * Start_hw
+ */
+void init_hw()
+{
+    unsigned int ra;
+    unsigned int rx;
+
+    /* Make gpio pin tied to the led an output */
+
+    //led off
+
+
+    /* Set up delay before timer interrupt (we use CM1) */
+    rx=GET32(CLO);
+    rx += INTERVAL;
+    PUT32(C3,rx);
+
+    /* Enable interrupt *line* */
+    PUT32(0x3F00B210, 0x00000001);
+    PUT32(0x3F00B210, 0x00000001);
+
+//    PUT32(0x3F00B210, 0x00000002);
+//    PUT32(0x3F00B210, 0x00000004);
+//    PUT32(0x3F00B210, 0x00000008);
+
+    /* Enable irq triggering by the *system timer* peripheral */
+    /*   - we use the compare module CM1 */
+    ENABLE_TIMER_IRQ();
+
+
+}
+
+void timer_test(void) {
+
+	enable_irqs();
+	enable_fiqs();
+
+	uart_print("timer test\n\r");
+	init_hw();
+
+//    *armTimerLoad = 0xF0000000; //set load value for 0.5Hz timer
+//    *armTimerReload = 0xF0000000;
+//    *arm_timer_div = 0x7d; //prescale by 250
+//    *armTimerControl = 0x003E00A2;
+//    *irqEnableBasic = 1; //clear existing interrupt
+
+	/* Use the ARM timer - BCM 2832 peripherals doc, p.196 */
+	/* Enable ARM timer IRQ */
+//	*irqEnableBasic = 0x00000001;
+//	/* Interrupt every 1024 * 256 (prescaler) timer ticks */
+//	*armTimerLoad = 0x40000000; //4000000
+//	/* Timer enabled, interrupt enabled, prescale=256, "23 bit" counter
+//	 * (did they mean 32 bit?)
+//	 */
+//	*armTimerControl = 0x000000aa;
+
+//	printH("RPI2 timer CS = %x\n", status());
+//	printH("RPI2 timer count = %x\n", count());
+//	printH("RPI2 timer cmp 0 = %x\n", cmp(0));
+//	printH("RPI2 timer cmp 1 = %x\n", cmp(1));
+//	printH("RPI2 timer cmp 2 = %x\n", cmp(2));
+//	printH("RPI2 timer cmp 3 = %x\n", cmp(3));
+//	printH("\n");
+//// trigger on the second next second (at least one second from now)
+////	set_cmp(1, count() / 1000000 * 1000000 + 2000000);
+//	set_cmp(1, count() + 2000000);
+//// clear pending bit and enable irq
+//	ctrl_set(1U << 1);
+//
+//	enable_irq(IRQ_TIMER1);
+//	enable_irqs();
+////	while (1) {
+////// chill out
+////		asm volatile ("wfi");
+//	}
+//	uint32_t interval = 0x00080000;//0xF4240;
+//	uint32_t rx = 0;
+//
+////    interval=0x00080000;
+////    rx=GET32(CLO);
+////    rx+=interval;
+//      rx  = *((volatile uint32_t*) 0x3F003004);
+//      printH("rx : %x\n", rx);
+//      rx += interval;
+//      printH("rx : %x\n", rx);
+//      printH("CLO :%x\n", *((volatile uint32_t*) 0x3F003004));
+//      printH("CHO :%x\n", *((volatile uint32_t*) 0x3F003008));
+////    PUT32(C1,rx);
+//    *((volatile uint32_t*) 0x3F003010) = rx;
+//
+////    PUT32(CS,2);
+//    *((volatile uint32_t*) 0x3F003000) = 2;
+//
+//    //    PUT32(0x2000B210,0x00000002);
+//    *((volatile uint32_t*) 0x3F00B210) = 0;
+////    PUT32(0x2000B20C,0x80|1);
+//    *((volatile uint32_t*) 0x3F00B20C) = (0x80 | 1);
+}
+
+
 inline void nrm_delay(void)
 {
     volatile int i = 0;
@@ -72,16 +235,25 @@ void nrm_loop(void)
 
     uart_print("=== Starting commom start up\n\r");
 
-    gic_init();
+    timer_test();
+//    gic_init();
     /* Enables receiving virtual timer interrupt */
-    vtimer_mask(0);
+//    vtimer_mask(0);
     /* We are ready to accept irqs with GIC. Enable it now */
-    irq_enable();
+//    irq_enable();
     /* Test the sample virtual device.
      * - Uncomment the following line of code only if 'vdev_sample' is
      *   registered at the monitor.
      * - Otherwise, the monitor will hang with data abort.
      */
+    while(i<100)
+    {
+    	uart_print("=== Starting commom start up\n\r");
+    	i++;
+    }
+    while(1)
+    	;
+
 #ifdef TESTS_ENABLE_VDEV_SAMPLE
     test_vdev_sample();
 #endif

@@ -18,11 +18,40 @@ static hvmm_status_t host_interrupt_init(void)
         uart_print_hex32(hcr);
         uart_print("\n\r");
         hcr |= HCR_IMO | HCR_FMO;  // Overrides the CPSR.I/F
+//        hcr |= HCR_TIDCP;
         write_hcr(hcr);
         hcr = read_hcr();
         uart_print("hcr:");
         uart_print_hex32(hcr);
         uart_print("\n\r");
+
+
+
+        uint32_t hcptr;
+        hcptr = read_hcptr();
+        uart_print("hcptr:");
+        uart_print_hex32(hcptr);
+        uart_print("\n\r");
+//        hcptr |= (0x1 << 15);
+        hcptr |= (0x1 << 13);
+        write_hcptr(hcptr);
+        uart_print("hcptr:");
+        uart_print_hex32(hcptr);
+        uart_print("\n\r");
+//1483
+        uint32_t hstr;
+        hstr = read_hstr();
+        uart_print("hstr:");
+        uart_print_hex32(hstr);
+        uart_print("\n\r");
+        hstr |= HSTR_T15;
+        hstr |= (0x1<<3);
+        write_hstr(hstr);
+        uart_print("hstr:");
+        uart_print_hex32(hstr);
+        uart_print("\n\r");
+
+
     }
 
     /* Physical Interrupt: GIC Distributor & CPU Interface */

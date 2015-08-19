@@ -101,7 +101,7 @@ hyp_vector_hvc:
     push    {r0-r12}
     mrs    r0, spsr_hyp
     mrs    r1, elr_hyp
-    push    {r0, r1, lr}
+    push    {r0, r1, lr}  // To do ... lr...
 
     @ service other argument values -> _hyp_hvc_service(sp)
     mov    r0, sp

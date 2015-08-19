@@ -30,7 +30,12 @@
 #define WFI_WFE_DIRECTION_BIT   0x00000001
 #define WFI_WFE_DIRECTION_SHIFT 0 /* Do not use it to shift. */
 
-void emulate_mcr_mrc_cp15(unsigned int iss, unsigned int il)
+//        val = read_cntv_ctl();
+//        break;
+//    case GENERIC_TIMER_REG_VIRT_TVAL:
+//        val = read_cntv_tval();
+static int value[3];
+void emulate_mcr_mrc_cp15(unsigned int iss, struct arch_regs *regs, unsigned int il)
 {
     /*
      * If value of EC bit is equal to 0x3, trapped
@@ -40,7 +45,7 @@ void emulate_mcr_mrc_cp15(unsigned int iss, unsigned int il)
     /* unsigned int cv = (iss & EC_ZERO_CV_BIT) >> EC_ZERO_CV_SHIFT; */
 
     /* unsigned int cond; */
-    unsigned int Opc2, Opc1, CRn, Rt, CRm, dir;
+    unsigned int Opc2, Opc1, CRn, Rt, CRm, dir, data, val;
 
     /* warning: variable ‘cond’ set but not used */
     /*
@@ -55,15 +60,59 @@ void emulate_mcr_mrc_cp15(unsigned int iss, unsigned int il)
     CRn = (iss & MCR_MRC_CRN_BIT) >> MCR_MRC_CRN_SHIFT;
     Rt = (iss & MCR_MRC_RT_BIT) >> MCR_MRC_RT_SHIFT;
     CRm = (iss & MCR_MRC_CRM_BIT) >> MCR_MRC_CRM_SHIFT;
+// //			asm volatile("mcr p15, 0, %0, c14, c3, 0" : : "r" (val ));
+
+//asm volatile("mcr p15, 0, %0, c7, c0, 4" : : "r" (val )); 1481
+    //  p15, 0, %0, c3, c1, 4
     /* Register ordering MRC CP#, OPC1, REG#, CRn, CRm, OPC2 */
     if (dir == 0) {
-        printh("MCR ");
-        printh("p15, %d, Rt%d, c%d, c%d, %d\n", Opc1, Rt, CRn, CRm, Opc2);
+//        printh("MCR ");
+//        printh("p15, %d, Rt%d, c%d, c%d, %d\n", Opc1, Rt, CRn, CRm, Opc2);
+//        cpu_vcpu_cp15_read(regs, Opc1, Rt, CRn, CRm, Opc2, &data);
+//        printH("AAA: %x\n", regs->gpr[Rt-1]);
+//        printH("wirte val: %x\n", regs->gpr[Rt]);
+        val = regs->gpr[Rt];
+        if(Opc2 == 4){
+//        	asm volatile("mcr p15, 0, %0, c14, c3, 1" : : "r" (val));
+//        	write_cntv_ctl(val);
+        	value[0] = val;
+        }
+        else if (Opc2 == 5){
+//        	asm volatile("mcr p15, 0, %0, c14, c3, 0" : : "r" (val));
+//        	write_cntv_tval(0x900000);
+        	value[1] = val;
+        }
+        else
+        	asm volatile("mcr p15, 0, %0, c3, c0, 0" : : "r" (val));
+
     } else if (dir == 1) {
-        printh("MRC ");
-        printh("p15, %d, Rt%d, c%d, c%d, %d\n", Opc1, Rt, CRn, CRm, Opc2);
+//        printh("MRC ");
+//        printh("p15, %d, Rt%d, c%d, c%d, %d\n", Opc1, Rt, CRn, CRm, Opc2);
+        if(Opc2 == 4){
+        	asm volatile("mrc p15, 0, %0, c14, c3, 1" :  "=r" (val ));
+//        	val = value[0];//read_cntv_ctl();
+        	val = 5;
+        }
+        else if(Opc2 == 5){
+        	asm volatile("mrc p15, 0, %0, c14, c3, 0" :  "=r" (val ));
+        	val = read_cntv_tval();
+        }
+        else
+        	asm volatile("mrc p15, 0, %0, c3, c0, 0" :  "=r" (val ));
+
+		regs->gpr[Rt] = val;
+//		printH("read val :%x\n", val);
     } else
         printh("Error: Unknown instructions\n");
+
+
+    uint8_t isize = 4;
+
+    if (regs->cpsr & 0x20) /* Thumb */
+        isize = 2;
+
+    regs->pc += isize;
+
 }
 
 void emulate_mcr_mrc_cp14(unsigned int iss, unsigned int il)

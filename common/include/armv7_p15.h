@@ -15,11 +15,29 @@
                                 : : "r" ((val)) : "memory", "cc")
 
 /* ARMv7 Registers */
+#define HSTR_T15	(0x1 << 15)
+#define HCPTR_TTA	(0x1 << 20)
 #define HCR_FMO     0x8
 #define HCR_IMO     0x10
 #define HCR_VI      (0x1 << 7)
 
 /* 32bit case only */
+//HSTR, Hyp System Trap Register, Virtualization Extensions
+#define write_hstr(val)         asm volatile(\
+                                " mcr     p15, 4, %0, c1, c1, 3\n\t" \
+                                : : "r" ((val)) : "memory", "cc")
+#define read_hstr()            ({ uint32_t rval; asm volatile(\
+                                " mrc     p15, 4, %0, c1, c1, 3\n\t" \
+                                : "=r" (rval) : : "memory", "cc"); rval; })
+
+//HCPTR, Hyp Coprocessor Trap Register, Virtualization Extensions
+#define write_hcptr(val)         asm volatile(\
+                                " mcr     p15, 4, %0, c1, c1, 2\n\t" \
+                                : : "r" ((val)) : "memory", "cc")
+#define read_hcptr()            ({ uint32_t rval; asm volatile(\
+                                " mrc     p15, 4, %0, c1, c1, 2\n\t" \
+                                : "=r" (rval) : : "memory", "cc"); rval; })
+
 #define read_ttbr0()            ({ uint32_t rval; asm volatile(\
                                 " mrc     p15, 0, %0, c2, c0, 0\n\t" \
                                 : "=r" (rval) : : "memory", "cc"); rval; })
@@ -298,6 +316,10 @@
 #define read_mmu()            ({ uint32_t rval; asm volatile(\
                                 " mrc     p15, 0, %0, c1, c0, 0\n\t" \
                                 : "=r" (rval) : : "memory", "cc"); rval; })
+
+#define write_cache_clean(val)        asm volatile(\
+                                " mcr     p15, 0, %0, c7, c14, 0\n\t" \
+                                : : "r" ((val)) : "memory", "cc")
 /* TLB maintenance operations */
 
 /* Invalidate entire unified TLB */

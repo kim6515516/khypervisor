@@ -281,7 +281,9 @@ vmid_t sched_policy_determ_next(void)
     if (next == VMID_INVALID)
         next = guest_first_vmid();
 
-    return next;
+//    return next;
+    return 0;
+
 #endif
 //    return guest_first_vmid();
 }

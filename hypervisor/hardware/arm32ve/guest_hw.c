@@ -306,7 +306,10 @@ static hvmm_status_t guest_hw_init(struct guest_struct *guest,
     /* Initialize loader status for reboot */
     regs->gpr[10] = 0;
     /* supervisor mode */
-    regs->cpsr = 0x1d3;
+//    regs->cpsr = 0x1d3;
+    regs->cpsr = 0x0d3;
+    //hypervisor mode"
+//    regs->cpsr = 0x1a;
     /* regs->gpr[] = whatever */
     context_init_cops(&context->regs_cop);
     context_init_banked(&context->regs_banked);

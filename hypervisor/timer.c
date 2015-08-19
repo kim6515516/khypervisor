@@ -126,7 +126,8 @@ hvmm_status_t timer_init(uint32_t irq)
     if (_ops->init)
         _ops->init();
 
-    timer_requset_irq(irq);
+//    timer_requset_irq(irq);
+    timer_start();
 
     return HVMM_STATUS_SUCCESS;
 }

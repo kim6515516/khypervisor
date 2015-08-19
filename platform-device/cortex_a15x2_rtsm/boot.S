@@ -118,7 +118,8 @@ start:
 
     @ Set NSACR to allow coprocessor access from non-secure
     mrc	p15, 0, r0, c1, c1, 2
-    ldr	r1, =0x43fff
+@    ldr	r1, =0x43fff
+   ldr	r1, =0xffffffff
     orr	r0, r0, r1
     mcr	p15, 0, r0, c1, c1, 2
 

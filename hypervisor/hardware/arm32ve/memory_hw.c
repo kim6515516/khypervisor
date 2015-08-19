@@ -1125,6 +1125,32 @@ static int memory_enable(void)
 }
 
 /**
+ * \defgroup Attribute_Indexes
+ *
+ * These are valid in the AttrIndx[2:0] field of an LPAE stage-1 page
+ * table entry. They are indexes into the bytes of the MAIRx registers.
+ * The 8-bit fields are packed little-endian into MAIR0 and MAIR1.
+ * /ref Memory_Attribute_Indirection_Register "MAIRx"
+ * <pre>
+ *                          ai    encoding
+ *   ATTR_IDX_UNCACHED      000   0000 0000  -- Strongly Ordered
+ *   ATTR_IDX_BUFFERABLE    001   0100 0100  -- Non-Cacheable
+ *   ATTR_IDX_WRITETHROUGH  010   1010 1010  -- Write-through
+ *   ATTR_IDX_WRITEBACK     011   1110 1110  -- Write-back
+ *   ATTR_IDX_DEV_SHARED    100   0000 0100  -- Device
+ *            ??            101
+ *            reserved      110
+ *   ATTR_IDX_WRITEALLOC    111   1111 1111  -- Write-back write-allocate
+ *
+ *   ATTR_IDX_DEV_NONSHARED 100   (== ATTR_IDX_DEV_SHARED)
+ *   ATTR_IDX_DEV_WC        001   (== ATTR_IDX_BUFFERABLE)
+ *   ATTR_IDX_DEV_CACHED    011   (== ATTR_IDX_WRITEBACK)
+ *   </pre>
+ * @{
+ */
+
+
+/**
  * @brief Initializes the hyp mode memory management.
  *
  * Initialize and setting the translation table descriptors of the Hyp mode.
@@ -1154,16 +1180,16 @@ static void host_memory_init(void)
     int i, j;
     uint64_t pa = 0x00000000ULL;
 //ATTR_IDX_DEV_SHARED
-    _hmm_pgtable[0] = lpaed_host_l1_block(pa, ATTR_IDX_WRITEALLOC);  // 0x0000 0000
-    pa += 0x10000000;
+    _hmm_pgtable[0] = lpaed_host_l1_block(pa, ATTR_IDX_DEV_SHARED);  // 0x0000 0000
+    pa += 0x40000000;
     uart_print("&_hmm_pgtable[0]:");
     uart_print_hex32((uint32_t) &_hmm_pgtable[0]);
     uart_print("\n\r");
     uart_print("lpaed:");
     uart_print_hex64(_hmm_pgtable[0].bits);
     uart_print("\n\r");
-    _hmm_pgtable[1] = lpaed_host_l1_block(pa, ATTR_IDX_WRITEALLOC);  // 0x1000 0000
-    pa += 0x10000000;
+    _hmm_pgtable[1] = lpaed_host_l1_block(pa, ATTR_IDX_DEV_SHARED);  // 0x1000 0000
+    pa += 0x40000000;
     uart_print("&_hmm_pgtable[1]:");
     uart_print_hex32((uint32_t) &_hmm_pgtable[1]);
     uart_print("\n\r");
@@ -1171,7 +1197,7 @@ static void host_memory_init(void)
     uart_print_hex64(_hmm_pgtable[1].bits);
     uart_print("\n\r");
     _hmm_pgtable[2] = lpaed_host_l1_block(pa, ATTR_IDX_WRITEALLOC);  // 0x2000 0000
-    pa += 0x10000000;
+    pa += 0x40000000;
     uart_print("&_hmm_pgtable[2]:");
     uart_print_hex32((uint32_t) &_hmm_pgtable[2]);
     uart_print("\n\r");

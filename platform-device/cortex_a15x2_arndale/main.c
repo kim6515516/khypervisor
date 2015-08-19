@@ -71,14 +71,16 @@ static struct memmap_desc guest3_device_md[] = {
 #endif
 
 static struct memmap_desc guest0_memory_md[] = {
-    {"start", 0x00000000, 0x10000000, 0x30000000,
+    {"start", 0x00000000, 0x00000000, 0x3E000000,
      MEMATTR_NORMAL_OWB | MEMATTR_NORMAL_IWB
     },
+    {"afdf", 0x3F003000, 0x3F003000, SZ_4K, MEMATTR_DM },
     { "uart", 0x3F200000, 0x3F200000, SZ_1M, MEMATTR_DM },
     { "uart", 0x3FC00000, 0x3FC00000, SZ_1M, MEMATTR_DM },
     { "afdf", 0x3F400000, 0x3F400000, SZ_1M, MEMATTR_DM },
-    { "afdf", 0x3F000000, 0x3F000000, SZ_1M, MEMATTR_DM },
-    { "afdf", 0x35900000, 0x35900000, SZ_1M, MEMATTR_DM },
+//    { "afdf", 0x3F00B000, 0x3F00B000, SZ_1M, MEMATTR_DM },//ic
+//    { "afdf", 0x3f000000, 0x3f000000, SZ_16M, MEMATTR_DM },
+    // 3F700000
     {0, 0, 0, 0,  0},
 };
 
@@ -89,6 +91,8 @@ static struct memmap_desc guest1_memory_md[] = {
 	    },
 	    { "uart", 0x3F200000, 0x3F200000, SZ_1M, MEMATTR_DM },
 	    { "afdf", 0x3F400000, 0x3F400000, SZ_1M, MEMATTR_DM },
+	    { "afdf", 0x3F00B000, 0x3F00B000, SZ_1M, MEMATTR_DM },
+	    {"afdf", 0x3F003000, 0x3F003000, SZ_1M, MEMATTR_DM },
 //	    { "afdf", 0xFFF00000, 0xFFF00000, SZ_1M, MEMATTR_DM },
 	    {0, 0, 0, 0,  0},
 };
@@ -96,11 +100,30 @@ static struct memmap_desc guest1_memory_md[] = {
 static struct memmap_desc guest1_memory_md_ff[] = {
     /* 256MB */
 
-	    {"start", 0x00000000, 0, 0x10000000,
+	    {"start", 0x00100000, 0x00100000, 0x3FF00000,
+	    		MEMATTR_DM
+	    },
+	    {0, 0, 0, 0,  0},
+};
+
+static struct memmap_desc guest1_memory_md_ff2[] = {
+    /* 256MB */
+
+	    {"start", 0x00000000, 0, 0x40000000,
 	     MEMATTR_NORMAL_OWB | MEMATTR_NORMAL_IWB
 	    },
 	    {0, 0, 0, 0,  0},
 };
+
+static struct memmap_desc guest1_memory_md_ff3[] = {
+    /* 256MB */
+
+	    {"start", 0x00000000, 0, 0x40000000,
+	     MEMATTR_NORMAL_OWB | MEMATTR_NORMAL_IWB
+	    },
+	    {0, 0, 0, 0,  0},
+};
+
 
 #if _SMP_
 /**
@@ -113,6 +136,7 @@ static struct memmap_desc guest2_memory_md[] = {
     },
     {0, 0, 0, 0,  0},
 };
+
 
 /**
  * @brief Memory map for guest 3.
@@ -130,8 +154,8 @@ static struct memmap_desc guest3_memory_md[] = {
 static struct memmap_desc *guest0_mdlist[] = {
 	guest0_memory_md,   /* 0x0000_0000 */  // 고쳐야함. ......... 데헷.
 	guest1_memory_md_ff,   /* 0x4000_0000 */
-	guest1_memory_md_ff,
-	guest1_memory_md_ff,     /* 0xC000_0000 PA:0x40000000*/
+	guest1_memory_md_ff2,
+	guest1_memory_md_ff3,     /* 0xC000_0000 PA:0x40000000*/
     0
 };
 
@@ -229,6 +253,16 @@ void setup_memory()
 #endif
 }
 
+int
+isLittleEndian() {
+  int a = 0x05;
+  char * p = (char *) &a;
+  if (*p==0x05) {
+    return 1;
+  }
+  return 0;
+}
+
 /** @brief Registers generic timer irqs such as hypervisor timer event
  *  (GENERIC_TIMER_HYP), non-secure physical timer event(GENERIC_TIMER_NSP)
  *  and virtual timer event(GENERIC_TIMER_NSP).
@@ -262,6 +296,13 @@ int main_cpu_init()
 	 }
     init_print();
 
+    if (isLittleEndian()) {
+    	printH("Machine is Little Endian\n");
+    }
+    else {
+    	printH("Machine is Big Endian\n");
+    }
+
 #ifdef _SMP_
     /*
      * In Exnosy5250 platform like a Arndale, secondary cpus have been WFE
@@ -289,11 +330,11 @@ int main_cpu_init()
 
     enable_irqs();
     /* Initialize Timer */
-
-
-//    setup_timer();
-//    if (timer_init(_timer_irq))
-//        printh("[start_guest] timer initialization failed...\n");
+    // rpi2_timer_init();
+//
+    setup_timer();
+    if (timer_init(_timer_irq))
+        printh("[start_guest] timer initialization failed...\n");
 
     /* Initialize Guests */
     if (guest_init())
@@ -310,7 +351,7 @@ int main_cpu_init()
 
     /* Print Banner */
     printH("%s", BANNER_STRING);
-    rpi2_timer_init();
+//    rpi2_timer_init();
 
     /* Switch to the first guest */
     guest_sched_start();
