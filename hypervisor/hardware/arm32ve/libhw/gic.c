@@ -562,7 +562,7 @@ int getIrqNumber() {
 
 	else {
 		// No interrupt avaialbe, so just return.
-		return -1;
+		return 9999;
 	}
 
 	/* Keep only least significant bit, in case multiple interrupts have occured */

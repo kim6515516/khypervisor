@@ -19,6 +19,7 @@
 
 
 struct ic_rpi2_regs {
+	uint32_t intNumber;
     uint32_t IC_BASEIC_PENDING; /* 0x200  */
     uint32_t IC_PENDING1; /* 0x204 */
 
@@ -38,7 +39,10 @@ struct ic_rpi2_handler_entry {
     uint32_t offset;
     vdev_callback_t handler;
 };
+#define PENDING_MAX 20
 static struct ic_rpi2_regs ci_regs[NUM_GUESTS_STATIC];
+static struct ic_rpi2_regs ci_pending_regs[PENDING_MAX];
+static int countPending = 0;
 
 static struct vdev_memory_map _vdev_ic_rpi2_info = {
    .base = IC_RPI2_BASE_ADDR,
@@ -186,6 +190,8 @@ static struct ic_rpi2_handler_entry _ci_handler_map[0x10] = {
 #define IC_OFFSET_DISABLE_IRQS2		0x220
 #define IC_OFFSET_DISABLE_BASIC_IRQS	0x224
 
+int isFirst = 0;
+
 static hvmm_status_t vdev_ic_rpi2_access_handler(uint32_t write, uint32_t offset,
         uint32_t *pvalue, enum vdev_access_size access_size)
 {
@@ -197,7 +203,7 @@ static hvmm_status_t vdev_ic_rpi2_access_handler(uint32_t write, uint32_t offset
 //    if (offset == 20)
 //    	printH("iar = %d\n", *addr & 0x03ff);
 //    if (offset == 24)
-    	printH("access size : %d\n", access_size);
+
     if (!write) {
         /* READ */
     	if(offset == IC_OFFSET_BASEIC_PENDING)
@@ -227,13 +233,25 @@ static hvmm_status_t vdev_ic_rpi2_access_handler(uint32_t write, uint32_t offset
 
 //    	printH("1111111111111 %x\n", *pvalue);
        } else {
-        /* WRITE */
-        		*addr = *pvalue;
-        		*addr = *pvalue;
+    	    /* WRITE */
+//    	   if ( (offset == IC_OFFSET_ENABLE_IRQS2) && (0x02000000 == *pvalue) && (isFirst==1))
+//    		   ;
+//    	   else if ( (offset == IC_OFFSET_ENABLE_IRQS2) && (0x02000000 == *pvalue) && (isFirst==0)) {
+//    		   *addr = *pvalue;
+//    		   isFirst = 1 ;
+//    	   }
+//    	   else
+    		   *addr = *pvalue;
+//    		   *addr = *pvalue;
+//    		   *addr = *pvalue;
+
+    		    if(0x02000000 != *pvalue)
+    		    	printH("%s: %s offset:%x value:%x\n", __func__,
+    		            write ? "write" : "read", offset,
+    		            write ? *pvalue : *pvalue);
        }
-    	printH("%s: %s offset:%x value:%x\n", __func__,
-            write ? "write" : "read", offset,
-            write ? *pvalue : *pvalue);
+//    printH("access size : %d\n", access_size);
+
 //    printH("AAAAAAAAAAAAAA %x\n", *addr);
     	result = HVMM_STATUS_SUCCESS;
     return result;
@@ -333,8 +351,49 @@ static hvmm_status_t vdev_ic_rpi2_reset(void)
                 (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
                         + IC_OFFSET_DISABLE_BASIC_IRQS)));
 
-
+//    	static struct ic_rpi2_regs ci_pending_regs[PENDING_MAX];
+//    	static int countPending = 0;
     }
+    for (i = 0; i < PENDING_MAX ; i++) {
+
+    	ci_pending_regs[i].IC_BASEIC_PENDING =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_BASEIC_PENDING)));
+    	ci_pending_regs[i].IC_PENDING1 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_PENDING1)));
+
+    	ci_pending_regs[i].IC_PENDING2 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_PENDING2)));
+
+    	ci_pending_regs[i].IC_FIQ_CONTROL =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_FIQ_CONTROL)));
+    	ci_pending_regs[i].IC_ENABLE_IRQS1 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_ENABLE_IRQS1)));
+    	ci_pending_regs[i].IC_ENABLE_IRQS2 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_ENABLE_IRQS2)));
+    	ci_pending_regs[i].IC_ENABLE_BASIC_IRQS =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_ENABLE_BASIC_IRQS)));
+    	ci_pending_regs[i].IC_DISABLE_IRQS1 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_DISABLE_IRQS1)));
+
+    	ci_pending_regs[i].IC_DISABLE_IRQS2 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_DISABLE_IRQS2)));
+    	ci_pending_regs[i].IC_DISABLE_BASIC_IRQS =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_DISABLE_BASIC_IRQS)));
+
+//    	static struct ic_rpi2_regs ci_pending_regs[PENDING_MAX];
+//    	static int countPending = 0;
+    }
+
     return HVMM_STATUS_SUCCESS;
 }
 
@@ -400,23 +459,111 @@ static hvmm_status_t vdev_ic_rpi2_execute(int level, int num, int type, int irq)
 	}
 	else if (type == 4) { //all coply
 	//		printH("All Copy IC_pri2\n");
-			* (int*) 40000060 = 0x110;
+//			* (int*) 40000060 = 0x110;
 
-	    	ci_regs[0].IC_BASEIC_PENDING = 0; //uart
-	    	ci_regs[0].IC_PENDING1 =0;
+	    	ci_regs[0].IC_BASEIC_PENDING = 0x80000 ;// 0x02000000;//0x80000; //uart
 
-	    	ci_regs[0].IC_PENDING2 =0;
+	    	ci_regs[0].IC_PENDING1 =
+	                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+	                        + IC_OFFSET_PENDING1)));
 
-	    	ci_regs[0].IC_FIQ_CONTROL =0;
-	    	ci_regs[0].IC_ENABLE_IRQS1 = 0;
-	    	ci_regs[0].IC_ENABLE_IRQS2 = 0;
-	    	ci_regs[0].IC_ENABLE_BASIC_IRQS = 0;
-	    	ci_regs[0].IC_DISABLE_IRQS1 = 0;
-	    	ci_regs[0].IC_DISABLE_IRQS2 = 0;
-	    	ci_regs[0].IC_DISABLE_BASIC_IRQS =0;
+	    	ci_regs[0].IC_PENDING2 =
+	                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+	                        + IC_OFFSET_PENDING2)));
 
+	    	ci_regs[0].IC_FIQ_CONTROL =
+	                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+	                        + IC_OFFSET_FIQ_CONTROL)));
+	    	ci_regs[0].IC_ENABLE_IRQS1 =
+	                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+	                        + IC_OFFSET_ENABLE_IRQS1)));
+	    	ci_regs[0].IC_ENABLE_IRQS2 =
+	                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+	                        + IC_OFFSET_ENABLE_IRQS2)));
+	    	ci_regs[0].IC_ENABLE_BASIC_IRQS =
+	                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+	                        + IC_OFFSET_ENABLE_BASIC_IRQS)));
+	    	ci_regs[0].IC_DISABLE_IRQS1 =
+	                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+	                        + IC_OFFSET_DISABLE_IRQS1)));
+
+	    	ci_regs[0].IC_DISABLE_IRQS2 =
+	                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+	                        + IC_OFFSET_DISABLE_IRQS2)));
+	    	ci_regs[0].IC_DISABLE_BASIC_IRQS =
+	                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+	                        + IC_OFFSET_DISABLE_BASIC_IRQS)));
+
+
+
+		}
+	//add pending irq
+	else if (type == 5) {
+		if (countPending > PENDING_MAX)
+		{
+			printH("pending max\n");
 			return HVMM_STATUS_SUCCESS;
 		}
+		ci_pending_regs[countPending].intNumber = irq;
+		ci_pending_regs[countPending].IC_BASEIC_PENDING =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_BASEIC_PENDING)));
+
+		ci_pending_regs[countPending].IC_PENDING1 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_PENDING1)));
+
+		ci_pending_regs[countPending].IC_PENDING2 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_PENDING2)));
+
+		ci_pending_regs[countPending].IC_FIQ_CONTROL =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_FIQ_CONTROL)));
+		ci_pending_regs[countPending].IC_ENABLE_IRQS1 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_ENABLE_IRQS1)));
+		ci_pending_regs[countPending].IC_ENABLE_IRQS2 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_ENABLE_IRQS2)));
+		ci_pending_regs[countPending].IC_ENABLE_BASIC_IRQS =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_ENABLE_BASIC_IRQS)));
+		ci_pending_regs[countPending].IC_DISABLE_IRQS1 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_DISABLE_IRQS1)));
+
+		ci_pending_regs[countPending].IC_DISABLE_IRQS2 =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_DISABLE_IRQS2)));
+		ci_pending_regs[countPending].IC_DISABLE_BASIC_IRQS =
+                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+                        + IC_OFFSET_DISABLE_BASIC_IRQS)));
+		countPending++;
+
+		return HVMM_STATUS_SUCCESS;
+	} else if (type == 6) {
+		if(countPending < 1) {
+			printH("pending is null\n");
+			return HVMM_STATUS_BAD_ACCESS;
+		}
+		countPending--;
+    	ci_regs[0].IC_BASEIC_PENDING = ci_pending_regs[countPending].IC_BASEIC_PENDING;
+    	ci_regs[0].IC_PENDING1 = ci_pending_regs[countPending].IC_PENDING1;
+
+    	ci_regs[0].IC_PENDING2 = ci_pending_regs[countPending].IC_PENDING2;
+
+    	ci_regs[0].IC_FIQ_CONTROL = ci_pending_regs[countPending].IC_FIQ_CONTROL;
+    	ci_regs[0].IC_ENABLE_IRQS1 = ci_pending_regs[countPending].IC_ENABLE_IRQS1;
+    	ci_regs[0].IC_ENABLE_IRQS2 =ci_pending_regs[countPending].IC_ENABLE_IRQS2;
+    	ci_regs[0].IC_ENABLE_BASIC_IRQS = ci_pending_regs[countPending].IC_ENABLE_BASIC_IRQS;
+    	ci_regs[0].IC_DISABLE_IRQS1 = ci_pending_regs[countPending].IC_DISABLE_IRQS1;
+    	ci_regs[0].IC_DISABLE_IRQS2 = ci_pending_regs[countPending].IC_DISABLE_IRQS2;
+    	ci_regs[0].IC_DISABLE_BASIC_IRQS = ci_pending_regs[countPending].IC_DISABLE_BASIC_IRQS;
+    	return HVMM_STATUS_SUCCESS;
+	} else if (type == 7) {
+		return countPending;
+	}
 	return HVMM_STATUS_SUCCESS;
 }
 

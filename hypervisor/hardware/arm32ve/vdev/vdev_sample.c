@@ -48,7 +48,7 @@ static hvmm_status_t vdev_sample_access_handler(uint32_t write, uint32_t offset,
         case 0x44:
         case 0x48:
         case 0x4C:
-        	printH("NOT CPU 234 local timer init contros.\n");
+        	printH("NOT CPU 234 local timer init controls.\n");
             break;
         default:
         	 *(int*)(SAMPLE_BASE_ADDR + offset) = *pvalue;
