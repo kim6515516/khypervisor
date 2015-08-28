@@ -341,8 +341,7 @@ void changeGuestMode(int irq, void *current_regs)
 //    _guest_ops->end(irq);
 //    guest_switchto(0, 0);
 
-    volatile int *addr;
-    addr = (0x2C002000 + 0x20);
+
 //    *addr = 34;
 //    printH("changeGuest iar : %x\n", *addr);
 
@@ -564,12 +563,14 @@ static inline uint32_t generic_timer_reg_read(int reg)
 }
 void timerReset(void){
     generic_timer_reg_write(GENERIC_TIMER_REG_HYP_CTRL, 0x7);
-    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_TVAL, 100000);
+    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_TVAL, 0x150000);
     generic_timer_reg_write(GENERIC_TIMER_REG_HYP_CTRL, 0x5);
 }
 void timerReset2(void){
     generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_CTRL, 0x7);
-    generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_TVAL, 0x200000);
+//    generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_TVAL, 0x085000);
+    generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_TVAL, 0x120000);
+
     generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_CTRL, 0x5);
     isb();
 }
@@ -588,136 +589,135 @@ int isUart = 0;
 void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 {
     struct arch_regs *regs = (struct arch_regs *)current_regs;
+    uint32_t vmid =  guest_current_vmid();
     uint32_t cpu = smp_processor_id();
     uint32_t rx = 0;
     int ci, cr ;
     ci  = vdev_find_tag(0, 66);
-//	printH("irq:%d, c: %d, pc:%x, cpsr:%x\n", irq, c, regs->pc, regs->cpsr);
-    if( (regs->cpsr & 0x1F) == 0x12){ // pending..
-    	printH("IRQ pending!!\n");
-    	timerReset2();
-		 vdev_execute(0, ci, 5, irq );
-		 return;
-    }
+//	printH("irq:%d, c: %d, pc:%x, cpsr:%x, vid=%d\n", irq, c, regs->pc, regs->cpsr, vmid);
+//    (regs->cpsr & 0x1F) != 0x13)
+//    if(((regs->cpsr & 0x1F) != 0x10) && ((regs->cpsr & 0x1F) != 0x1f) || (vmid != 0) ) {  // not user mode, s
+		if( (vmid == 1) && (irq != 98) && (irq != 99) ){ // pending..
+//	    	printH("IRQ pending!!%d, vmid:%d\n" ,irq, vmid);
+	//    	timerReset();
+//			printH("irq:%d, c: %d, pc:%x, cpsr:%x, vid=%d\n", irq, c, regs->pc, regs->cpsr, vmid);
+			timerReset2();
+
+			if(irq == 65)
+				*((int*)0x3F00B224) = 0x2;
+			if(irq == 66 )
+				 *((int*)0x3F00B224) = 0x4;
+			if(irq == 9999)
+				*((int*)0x3F00B220) = 0x02000000;
+
+
+			 vdev_execute(0, ci, 5, irq );
+			 vdev_execute(0, ci, 5, irq );
+			 return;
+		} else if ( (vmid==0) && ((regs->cpsr & 0x1F) != 0x13) && ((regs->cpsr & 0x1F) != 0x10) && ((regs->cpsr & 0x1F) != 0x1f)) {
+			timerReset2();
+//			printH("c: %d, pc:%x, cpsr:%x, vid=%d\n", c, regs->pc, regs->cpsr, vmid);
+
+			if(irq == 65)
+				*((int*)0x3F00B224) = 0x2;
+			if(irq == 66 )
+				 *((int*)0x3F00B224) = 0x4;
+			if(irq == 9999)
+				*((int*)0x3F00B220) = 0x02000000;
+			 vdev_execute(0, ci, 5, irq );
+			 vdev_execute(0, ci, 5, irq );
+			 return;
+		}
+//    }
 
     cr = vdev_execute(0, ci, 7, -5);
-    if(cr > 0 ){   // pendding check
-    	printH("IRQ execute pending:%d\n", cr);
+    if(cr > 0 && (vmid==0) && (irq == 99) ){   // pendding check
+//    	printH("IRQ execute pending:%d\n", cr);
+//    	printH("e irq:%d, c: %d, pc:%x, cpsr:%x, vid=%d\n", irq, c, regs->pc, regs->cpsr, vmid);
     	vdev_execute(0, ci, 6, irq );
-    	timerReset2();
+//    	timerReset();
+
+    	ci  = vdev_find_tag(0, 77);
+        vdev_execute(0, ci, 1, 0x110 );
+        timerReset2();
 		changeGuestMode(irq, regs);
+		return;
     }
-//    if(( irq != 26) || (irq ==30 && c > 10000) ) {
-//    // 	_guest_ops->end(irq);
-//    		changeGuestMode(irq, current_regs) ;
-//    	return;
-//    }
-//    printH("isr IRQ ###: %x\n", irq);
-//    return;
-//    printIC();
-//    printH("isr IRQ : %d\n", irq);
+
     if( irq == 98) // hyper
     {
 
     	timerReset();
+    	if( _guest_module.ops->init)
+    		guest_switchto(sched_policy_determ_next(), 0);
 //    	printH("irq: 98\n");
+    	return;
     }
+
+
     if (irq == 99 ) // vtimer
     {
     	int ci;
-        c ++;
+        c++;
+//        if( guest_current_vmid()!=0)
+//        {
+//        	c++;
+//        	timerReset2();
+//        	return;
+//        }
 
-
-//    	uint32_t v1, v2;
-//    	asm volatile(\
-//    	                                " mrrc     p15, 4, %0, %1, c14\n\t" \
-//    	                                : "=r" (v1), "=r" (v2) : : "memory", "cc"); \
-//    	                                (((uint64_t)v2 << 32) + (uint64_t)v1);
-//
-//    	uart_print_hex64(v1);
-//    	uart_print_hex64(v2);
-//    	printH("\n");
-//    	uint64_t after = 0x0;
-//    	write_cntvoff(after);
-//    	timerReset2();
-//    	if(c > 70 && (c %2 == 1)) {
-
-    	if ( c > 80 && (c%2 == 0 )){
-        	 ci  = vdev_find_tag(0, 77);
-//        	 vdev_execute(0, ci, 1, (*((volatile unsigned int*) (0x40000060))) | 0x100 );
-
-        	 vdev_execute(0, ci, 1, 0x08);
-//    		generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_CTRL, 0x5);
-//    		generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_TVAL, 0x0);
-//    		printH("inject 99 ctl:%x\n", generic_timer_reg_read(GENERIC_TIMER_REG_VIRT_CTRL));
-//    		printH("inject 99\n");
-//        	 timerReset2();
-    		changeGuestMode(99, regs);
-    		if(isUart > 0)
-    			isUart++;
-    	}
-//    	else if  ( (c > 50) && (isUart%6==5)){
-//printH("inject UART\n");
-//    		int ci  = vdev_find_tag(0, 77);
-//    	//        	 vdev_execute(0, ci, 1, (*((volatile unsigned int*) (0x40000060))) | 0x100 );
-//    		 vdev_execute(0, ci, 1, 0x110 );
-//    		 ci  = vdev_find_tag(0, 66);
-//    //		 vdev_execute(0, ci, 3, -5 );
-//    		 vdev_execute(0, ci, 4, -5 );
-////    		 *((int*)0x3F00B220) = 0x02000000;
-//    //		 vdev_execute(0, ci, 4, -5 );
-//    	//    		generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_CTRL, 0x5);
-//    	//    		generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_TVAL, 0x0);
-//    	//    		printH("inject 99 ctl:%x\n", generic_timer_reg_read(GENERIC_TIMER_REG_VIRT_CTRL));
-//    	//    		printH("inject 99\n");
-//    		changeGuestMode(irq, regs);
-//
-//    	}
-    	else
+        if(c%2==0){
+        	// switching
     		timerReset2();
-//    	}
-//    	else
-//    		timerReset2();
-//    	while(1) ;
+    		if( _guest_module.ops->init)
+    		    		guest_switchto(sched_policy_determ_next(), 0);
+
+    		if (c > 100 && vmid ==0){
+    		       	 ci  = vdev_find_tag(0, 77);
+    		//       	 printH("aaaaaaaaaa\n");
+    		//        	 vdev_execute(0, ci, 1, (*((volatile unsigned int*) (0x40000060))) | 0x100 );
+    		       	 vdev_execute(0, ci, 1, 0x08);
+    		       	 timerReset2();
+    		   		changeGuestMode(99, regs);
+    		}
+//        } else if (c > 100 && vmid ==0){
+//       	 ci  = vdev_find_tag(0, 77);
+////       	 printH("aaaaaaaaaa\n");
+////        	 vdev_execute(0, ci, 1, (*((volatile unsigned int*) (0x40000060))) | 0x100 );
+//       	 vdev_execute(0, ci, 1, 0x08);
+//       	 timerReset2();
+//   		changeGuestMode(99, regs);
+        }
+
+        return;
 
 
-    } else if(irq == 65){
-//    	printH("!!!!!!!!!!!!!!!!!!!!!!!!!!! IRQ : %d\n", irq);
 
-
+    } else if(irq == 65 && vmid == 0){
 
 			int ci  = vdev_find_tag(0, 77);
-		//        	 vdev_execute(0, ci, 1, (*((volatile unsigned int*) (0x40000060))) | 0x100 );
-//			 vdev_execute(0, ci, 1, (*((volatile unsigned int*) (0x40000060))) );
+
 			 vdev_execute(0, ci, 1, 0x110 );
 
 			 ci  = vdev_find_tag(0, 66);
 			 vdev_execute(0, ci, 3, -5 );
 			 *((int*)0x3F00B224) = 0x2;
-		//    		generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_CTRL, 0x5);
-		//    		generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_TVAL, 0x0);
-		//    		printH("inject 99 ctl:%x\n", generic_timer_reg_read(GENERIC_TIMER_REG_VIRT_CTRL));
-		//    		printH("inject 99\n");
-//			 timerReset2();
+
 			changeGuestMode(irq, regs);
 
-    } else if(irq == 66 ){
+    } else if(irq == 66 && vmid == 0){
 //    	printH("!!!!!!!!!!!!!!!!!!!!!!!!!!! IRQ : %d\n", irq);
 		int ci  = vdev_find_tag(0, 77);
-	//        	 vdev_execute(0, ci, 1, (*((volatile unsigned int*) (0x40000060))) | 0x100 );
-//		 vdev_execute(0, ci, 1, (*((volatile unsigned int*) (0x40000060))) );
+
 		 vdev_execute(0, ci, 1, 0x100 );
 
 		 ci  = vdev_find_tag(0, 66);
 		 vdev_execute(0, ci, 3, -5 );
 		 *((int*)0x3F00B224) = 0x4;
-	//    		generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_CTRL, 0x5);
-	//    		generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_TVAL, 0x0);
-	//    		printH("inject 99 ctl:%x\n", generic_timer_reg_read(GENERIC_TIMER_REG_VIRT_CTRL));
-	//    		printH("inject 99\n");
+
 //		 timerReset2();
 		changeGuestMode(irq, regs);
-    } else if (irq == 9999){
+    } else if (irq == 9999 && vmid ==0){
     	if(isUart == 0)
     		isUart =  1;
 //    	printH("!!!!!!!!!!!!!!!!!!!!!!!!!!! IRQ : %d\n", irq);
@@ -729,11 +729,7 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 //		 vdev_execute(0, ci, 3, -5 );
 		 vdev_execute(0, ci, 4, -5 );
 		 *((int*)0x3F00B220) = 0x02000000;
-//		 vdev_execute(0, ci, 4, -5 );
-	//    		generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_CTRL, 0x5);
-	//    		generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_TVAL, 0x0);
-	//    		printH("inject 99 ctl:%x\n", generic_timer_reg_read(GENERIC_TIMER_REG_VIRT_CTRL));
-	//    		printH("inject 99\n");
+
 //		 timerReset2();
 		changeGuestMode(irq, regs);
 //

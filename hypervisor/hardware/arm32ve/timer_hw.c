@@ -227,7 +227,7 @@ static hvmm_status_t generic_ph_timer_enable()
 //    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_TVAL, 0x2ffff);
 
 //    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_CTRL, 0x7);
-//    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_TVAL, 100000);
+//    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_TVAL, 0x50000);
 //    generic_timer_reg_write(GENERIC_TIMER_REG_HYP_CTRL, 0x5);
 
     generic_timer_reg_write(GENERIC_TIMER_REG_VIRT_CTRL, 0x7);

@@ -151,7 +151,7 @@ void timer_test(void) {
 	enable_fiqs();
 
 	uart_print("timer test\n\r");
-	init_hw();
+//	init_hw();
 
 //    *armTimerLoad = 0xF0000000; //set load value for 0.5Hz timer
 //    *armTimerReload = 0xF0000000;
@@ -235,7 +235,7 @@ void nrm_loop(void)
 
     uart_print("=== Starting commom start up\n\r");
 
-    timer_test();
+//    timer_test();
 //    gic_init();
     /* Enables receiving virtual timer interrupt */
 //    vtimer_mask(0);
@@ -251,43 +251,43 @@ void nrm_loop(void)
     	uart_print("=== Starting commom start up\n\r");
     	i++;
     }
-    while(1)
-    	;
+//    while(1)
+//    	;
 
-#ifdef TESTS_ENABLE_VDEV_SAMPLE
-    test_vdev_sample();
-#endif
-    for (i = 0; i < NUM_ITERATIONS; i++) {
-        uart_print(GUEST_LABEL);
-        uart_print("iteration ");
-        uart_print_hex32(i);
-        uart_print("\n\r");
-        nrm_delay();
-#ifdef __MONITOR_CALL_HVC__
-        /* Hyp monitor guest run in Non-secure supervisor mode.
-         Request test hvc ping and yield one after another
-         */
-        if (i & 0x1) {
-            uart_print(GUEST_LABEL);
-            uart_print("hsvc_ping()\n\r");
-            hsvc_ping();
-            uart_print(GUEST_LABEL);
-            uart_print("returned from hsvc_ping()\n\r");
-        } else {
-            uart_print(GUEST_LABEL);
-            uart_print("hsvc_yield()\n\r");
-            hsvc_yield();
-            uart_print(GUEST_LABEL);
-            uart_print("returned from hsvc_yield()\n\r");
-        }
-#else
+//#ifdef TESTS_ENABLE_VDEV_SAMPLE
+//    test_vdev_sample();
+//#endif
+//    for (i = 0; i < NUM_ITERATIONS; i++) {
+//        uart_print(GUEST_LABEL);
+//        uart_print("iteration ");
+//        uart_print_hex32(i);
+//        uart_print("\n\r");
+//        nrm_delay();
+//#ifdef __MONITOR_CALL_HVC__
+//        /* Hyp monitor guest run in Non-secure supervisor mode.
+//         Request test hvc ping and yield one after another
+//         */
+//        if (i & 0x1) {
+//            uart_print(GUEST_LABEL);
+//            uart_print("hsvc_ping()\n\r");
+//            hsvc_ping();
+//            uart_print(GUEST_LABEL);
+//            uart_print("returned from hsvc_ping()\n\r");
+//        } else {
+//            uart_print(GUEST_LABEL);
+//            uart_print("hsvc_yield()\n\r");
+//            hsvc_yield();
+//            uart_print(GUEST_LABEL);
+//            uart_print("returned from hsvc_yield()\n\r");
+//        }
+//#else
         /* Secure monitor guest run in Non-secure supervisor mode
          Request for switch to Secure mode (sec_loop() in the monitor)
          */
-        SWITCH_MANUAL();
-#endif
+//        SWITCH_MANUAL();
+//#endif
         nrm_delay();
-    }
+//    }
 
     uart_print(GUEST_LABEL);
     uart_print("common nrm_loop done\n\r");

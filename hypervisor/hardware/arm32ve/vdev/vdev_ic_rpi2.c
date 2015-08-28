@@ -20,6 +20,7 @@
 
 struct ic_rpi2_regs {
 	uint32_t intNumber;
+//	uint32_t IC_LOCAL_PENDING;
     uint32_t IC_BASEIC_PENDING; /* 0x200  */
     uint32_t IC_PENDING1; /* 0x204 */
 
@@ -495,19 +496,36 @@ static hvmm_status_t vdev_ic_rpi2_execute(int level, int num, int type, int irq)
 	                        + IC_OFFSET_DISABLE_BASIC_IRQS)));
 
 
-
+//
+//	    	if(irq == 65)
+//	    		*((int*)0x3F00B224) = 0x2;
+//	    	if(irq == 66 )
+//	    		 *((int*)0x3F00B224) = 0x4;
+//	    	if(irq == 9999)
+//	    		*((int*)0x3F00B220) = 0x02000000;
 		}
 	//add pending irq
 	else if (type == 5) {
 		if (countPending > PENDING_MAX)
 		{
-			printH("pending max\n");
+			printH("Pending MAX\n");
 			return HVMM_STATUS_SUCCESS;
 		}
+
+//		printH("inject : %d\n", ci_pending_regs[countPending].intNumber);
 		ci_pending_regs[countPending].intNumber = irq;
-		ci_pending_regs[countPending].IC_BASEIC_PENDING =
-                (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
-                        + IC_OFFSET_BASEIC_PENDING)));
+
+		if(irq == 65)
+			ci_pending_regs[countPending].IC_BASEIC_PENDING = 0x2;
+		else if(irq == 66)
+			ci_pending_regs[countPending].IC_BASEIC_PENDING = 0x4;
+		else if(irq == 9999)
+			ci_pending_regs[countPending].IC_BASEIC_PENDING = 0x80000;
+		else {
+			ci_pending_regs[countPending].IC_BASEIC_PENDING =
+					(uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
+					                        + IC_OFFSET_BASEIC_PENDING)));
+		}
 
 		ci_pending_regs[countPending].IC_PENDING1 =
                 (uint32_t) (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR
@@ -548,11 +566,10 @@ static hvmm_status_t vdev_ic_rpi2_execute(int level, int num, int type, int irq)
 			return HVMM_STATUS_BAD_ACCESS;
 		}
 		countPending--;
+//		printH("Copy Pending IC register :%d\n", ci_pending_regs[countPending].intNumber);
     	ci_regs[0].IC_BASEIC_PENDING = ci_pending_regs[countPending].IC_BASEIC_PENDING;
     	ci_regs[0].IC_PENDING1 = ci_pending_regs[countPending].IC_PENDING1;
-
     	ci_regs[0].IC_PENDING2 = ci_pending_regs[countPending].IC_PENDING2;
-
     	ci_regs[0].IC_FIQ_CONTROL = ci_pending_regs[countPending].IC_FIQ_CONTROL;
     	ci_regs[0].IC_ENABLE_IRQS1 = ci_pending_regs[countPending].IC_ENABLE_IRQS1;
     	ci_regs[0].IC_ENABLE_IRQS2 =ci_pending_regs[countPending].IC_ENABLE_IRQS2;
@@ -560,6 +577,21 @@ static hvmm_status_t vdev_ic_rpi2_execute(int level, int num, int type, int irq)
     	ci_regs[0].IC_DISABLE_IRQS1 = ci_pending_regs[countPending].IC_DISABLE_IRQS1;
     	ci_regs[0].IC_DISABLE_IRQS2 = ci_pending_regs[countPending].IC_DISABLE_IRQS2;
     	ci_regs[0].IC_DISABLE_BASIC_IRQS = ci_pending_regs[countPending].IC_DISABLE_BASIC_IRQS;
+
+
+//    	printH("IC_BASEIC_PENDING:%x\n",ci_regs[0].IC_BASEIC_PENDING );
+//    	printH("IC_PENDING1:%x\n",ci_regs[0].IC_PENDING1);
+//    	printH("IC_PENDING2:%x\n",ci_regs[0].IC_PENDING2);
+//    	printH("IC_FIQ_CONTROL:%x\n",ci_regs[0].IC_FIQ_CONTROL);
+//    	printH("IC_ENABLE_IRQS1:%x\n",ci_regs[0].IC_ENABLE_IRQS1);
+//    	printH("IC_ENABLE_IRQS2:%x\n",ci_regs[0].IC_ENABLE_IRQS2);
+//    	printH("IC_ENABLE_BASIC_IRQS:%x\n",ci_regs[0].IC_ENABLE_BASIC_IRQS);
+//    	printH("IC_DISABLE_IRQS1:%x\n",ci_regs[0].IC_DISABLE_IRQS1);
+//    	printH("IC_DISABLE_IRQS2:%x\n",ci_regs[0].IC_DISABLE_IRQS2);
+//    	printH("IC_DISABLE_BASIC_IRQS:%x\n",ci_regs[0].IC_DISABLE_BASIC_IRQS);
+
+
+
     	return HVMM_STATUS_SUCCESS;
 	} else if (type == 7) {
 		return countPending;
