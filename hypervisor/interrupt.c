@@ -586,13 +586,19 @@ void timerReset2(void){
                               : "memory", "cc")
 
 int isUart = 0;
+int isButtonUp = 0;
+#define GPLEV0 0x3F200034
 void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 {
     struct arch_regs *regs = (struct arch_regs *)current_regs;
     uint32_t vmid =  guest_current_vmid();
     uint32_t cpu = smp_processor_id();
     uint32_t rx = 0;
-    int ci, cr ;
+    int ci, cr, ui, ra ;
+
+
+
+
     ci  = vdev_find_tag(0, 66);
 //	printH("irq:%d, c: %d, pc:%x, cpsr:%x, vid=%d\n", irq, c, regs->pc, regs->cpsr, vmid);
 //    (regs->cpsr & 0x1F) != 0x13)
@@ -665,6 +671,23 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 //        	timerReset2();
 //        	return;
 //        }
+
+
+        ra = GET32(GPLEV0);
+        if((ra & (1 << 17)))
+        {
+        	isButtonUp = 1;
+
+        } else {
+
+        	if( isButtonUp == 1) {
+				ui  = vdev_find_tag(0, 83); // vuart;
+				vdev_execute(0, ui, 0, 0 );
+				isButtonUp = 0;
+        	}
+
+        }
+
 
         if(c%2==0){
         	// switching

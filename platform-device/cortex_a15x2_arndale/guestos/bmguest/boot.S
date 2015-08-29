@@ -15,3 +15,4 @@ guest_start:
 
 b   common_guest_entry
 .type guest_start, % function
+

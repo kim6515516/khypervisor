@@ -89,7 +89,8 @@ static struct memmap_desc guest1_memory_md[] = {
 	    {"start", 0x00000000, 0x20000000, 0x30000000,
 	     MEMATTR_NORMAL_OWB | MEMATTR_NORMAL_IWB
 	    },
-	    { "uart", 0x3F200000, 0x3F200000, SZ_1M, MEMATTR_DM },
+//	    { "uart", 0x3F200000, 0x3F200000, SZ_1M, MEMATTR_DM },0x3F201000
+	    { "uart", 0x3F200000, 0x3F200000, SZ_4K, MEMATTR_DM },
 	    { "afdf", 0x3F400000, 0x3F400000, SZ_1M, MEMATTR_DM },
 	    { "afdf", 0x3F00B000, 0x3F00B000, SZ_1M, MEMATTR_DM },
 	    {"afdf", 0x3F003000, 0x3F003000, SZ_1M, MEMATTR_DM },
@@ -285,6 +286,20 @@ void setup_timer()
 #include <io-exynos.h>
 extern void init_secondary();
 
+#define GPFSEL1 0x3F200004
+#define GPSET0 0x3F20001C
+#define GPCLR0 0x3F200028
+
+void setup_gpio17()
+{
+	printH("Setup GPIO 17 for button. \n");
+	uint32_t ra;
+	ra = GET32(GPFSEL1);
+	ra &= ~(7 << 21);  // gpio 17
+//	ra |= 1 << 21;
+	PUT32(GPFSEL1, ra);
+}
+
 int main_cpu_init()
 {
 
@@ -348,7 +363,7 @@ int main_cpu_init()
     if (basic_tests_run(PLATFORM_BASIC_TESTS))
         printh("[start_guest] basic testing failed...\n");
 
-
+    setup_gpio17();  // setup gpio7
     /* Print Banner */
     printH("%s", BANNER_STRING);
 //    rpi2_timer_init();

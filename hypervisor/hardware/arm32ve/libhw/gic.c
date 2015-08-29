@@ -523,6 +523,34 @@ static uint32_t bcm2835_handle_irq(void)
      asm ("clz\t%0, %1": "=r" (__value): "r" (__arg)); \
      __value; })
 
+
+void dump_ic_pending(void) {
+	unsigned long ulMaskedStatus;
+	unsigned long irqNumber;
+
+	printH("IC_OFFSET_LOCAL_IRQ_PENDING0 : %x\n", (*((volatile unsigned int*) (0x40000060)))  );
+	printH("IC_OFFSET_LOCAL_IRQ_PENDING0 f: %x\n", (*((volatile unsigned int*) (0xf4000060)))  );
+
+	printH("IC_OFFSET_BASEIC_PENDING : %x\n", (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_BASEIC_PENDING))));
+	printH("IC_OFFSET_PENDING1 : %x\n", (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_PENDING1))));
+	printH("IC_OFFSET_PENDING2 : %x\n", (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_PENDING2))));
+
+	printH("IC_OFFSET_FIQ_CONTROL : %x\n", (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_FIQ_CONTROL))));
+	printH("IC_OFFSET_ENABLE_IRQS1 : %x\n", (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_ENABLE_IRQS1))));
+	printH("IC_OFFSET_ENABLE_IRQS2 : %x\n", (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_ENABLE_IRQS2))));
+
+	printH("IC_OFFSET_ENABLE_BASIC_IRQS : %x\n", (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_ENABLE_BASIC_IRQS))));
+	printH("IC_OFFSET_DISABLE_IRQS1 : %x\n", (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_DISABLE_IRQS1))));
+	printH("IC_OFFSET_DISABLE_IRQS2 : %x\n", (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_DISABLE_IRQS2))));
+	printH("IC_OFFSET_DISABLE_BASIC_IRQS : %x\n", (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_DISABLE_BASIC_IRQS))));
+
+//	ulMaskedStatus = (*((volatile unsigned int*) (IC_RPI2_BASE_ADDR + IC_OFFSET_PENDING1)));
+//	irqNumber = 31;
+//	ulMaskedStatus&=-ulMaskedStatus;
+//	irqNumber=irqNumber-clz(ulMaskedStatus);
+
+}
+
 /**
  *	This is the global IRQ handler on this platform!
  *	It is based on the assembler code found in the Broadcom datasheet.
@@ -562,6 +590,7 @@ int getIrqNumber() {
 
 	else {
 		// No interrupt avaialbe, so just return.
+//		dump_ic_pending();
 		return 9999;
 	}
 
