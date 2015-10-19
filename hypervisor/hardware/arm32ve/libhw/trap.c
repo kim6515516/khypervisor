@@ -203,6 +203,6 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
     return HYP_RESULT_ERET;
 trap_error:
     _trap_dump_bregs();
-    printH("fipa is %x guest pc is %x\n", fipa, regs->pc);
+    printH("VM:%d fipa is %x guest pc is %x\n",guest_current_vmid(), fipa, regs->pc);
     hyp_abort_infinite();
 }

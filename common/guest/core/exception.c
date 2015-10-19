@@ -18,5 +18,7 @@ void _except_svc(struct arch_regs *regs)
 void _except_irq(struct arch_regs *regs)
 {
     gic_interrupt(0, regs);
+//    uart_print("recevied irq in guestloader :");
+//    uart_print("\n\r");
 }
 

@@ -470,7 +470,7 @@ static hvmm_status_t vdev_gicd_access_handler(uint32_t write,
         uint32_t offset, uint32_t *pvalue,
         enum vdev_access_size access_size)
 {
-    printH("%s: %s offset:%x value:%x access_size : %d\n", __func__,
+    printh("VM:%d %s: %s offset:%x value:%x access_size : %d\n",guest_current_vmid(), __func__,
             write ? "write" : "read", offset,
             write ? *pvalue : (uint32_t) pvalue, access_size);
     hvmm_status_t result = HVMM_STATUS_BAD_ACCESS;

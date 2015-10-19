@@ -80,7 +80,7 @@ int32_t vdev_find_tag(int level, int tag)
     int32_t i;
     int32_t vdev_num = VDEV_NOT_FOUND;
     struct vdev_module *vdev;
-    printH("vdev_find_tag\n");
+//    printH("vdev_find_tag\n");
     for (i = 0; i < _vdev_size[level]; i++) {
         vdev = _vdev_module[level][i];
         if (!vdev) {
