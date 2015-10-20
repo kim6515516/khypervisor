@@ -200,12 +200,13 @@ static void vgicd_changed_istatus(vmid_t vmid, uint32_t istatus,
         if (pirq != PIRQ_INVALID) {
             /* changed bit */
             if (istatus & (1 << bit)) {
-                printh("[%s : %d] enabled irq num is %d\n", __func__,
+                printH("[%s : %d] enabled irq num is %d\n", __func__,
                         __LINE__, bit + minirq);
                 interrupt_host_configure(pirq);
+                interrupt_host_enable(pirq);
                 interrupt_guest_enable(vmid, pirq);
             } else {
-                printh("[%s : %d] disabled irq num is %d\n", __func__,
+                printH("[%s : %d] disabled irq num is %d\n", __func__,
                         __LINE__, bit + minirq);
                 interrupt_host_disable(pirq);
             }

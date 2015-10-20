@@ -167,7 +167,7 @@ static struct memmap_desc guest0_memory_md[] = {
  */
 static struct memmap_desc guest1_memory_md[] = {
     /* 256MB */
-    {"start", 0x00000000, 0, 0x10000000,
+    {"start", 0x00000000, 0, 0x40000000,
      MEMATTR_NORMAL_OWB | MEMATTR_NORMAL_IWB
     },
     {0, 0, 0, 0,  0},
@@ -329,7 +329,7 @@ void setup_interrupt()
 //    DECLARE_VIRQMAP(_guest_virqmap, 0, 30, 30);
     DECLARE_VIRQMAP(_guest_virqmap, 0, 34, 34);
 //    DECLARE_VIRQMAP(_guest_virqmap, 0, 35, 35);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 36, 36);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 36, 36);
 //
 //
 //    DECLARE_VIRQMAP(_guest_virqmap, 0, 37, 37);
@@ -342,8 +342,8 @@ void setup_interrupt()
 ////    DECLARE_VIRQMAP(_guest_virqmap, 1, 39, 37);
 ////    DECLARE_VIRQMAP(_guest_virqmap, 2, 40, 37);
 ////    DECLARE_VIRQMAP(_guest_virqmap, 3, 48, 37);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 41, 41);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 42, 42);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 41, 41);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 42, 42);
 //    DECLARE_VIRQMAP(_guest_virqmap, 0, 43, 43);
     DECLARE_VIRQMAP(_guest_virqmap, 0, 44, 44);
 //    DECLARE_VIRQMAP(_guest_virqmap, 0, 45, 45);
@@ -367,14 +367,14 @@ void setup_interrupt()
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 33, 33);
     DECLARE_VIRQMAP(_guest_virqmap, 1, 34, 34);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 35, 35);
-//    DECLARE_VIRQMAP(_guest_virqmap, 2, 36, 36);
+    DECLARE_VIRQMAP(_guest_virqmap, 1, 36, 36);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 37, 38);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 38, 37);
     DECLARE_VIRQMAP(_guest_virqmap, 1, 39, 37);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 40, 37);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 48, 37);
-//    DECLARE_VIRQMAP(_guest_virqmap, 2, 41, 41);
-//    DECLARE_VIRQMAP(_guest_virqmap, 2, 42, 42);
+    DECLARE_VIRQMAP(_guest_virqmap, 1, 41, 41);
+    DECLARE_VIRQMAP(_guest_virqmap, 1, 42, 42);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 43, 43);
     DECLARE_VIRQMAP(_guest_virqmap, 1, 44, 44);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 45, 45);

@@ -208,7 +208,7 @@ static hvmm_status_t vdev_cpu_interface_access_handler(uint32_t write, uint32_t 
     	}
         if (offset == GIC_OFFSET_GICC_IAR) {
         	*pvalue = ci_regs[vmid].GICC_IAR;
-        	//if( (ci_regs[vmid].GICC_IAR!=34) && (ci_regs[vmid].GICC_IAR!=1023))
+        	if( (ci_regs[vmid].GICC_IAR!=34) && (ci_regs[vmid].GICC_IAR!=1023))
         		printH("vm: %d read iar: GICC_IAR %d\n", vmid, *pvalue);
         }
 //    	printH("1111111111111 %x\n", *pvalue);
@@ -216,6 +216,7 @@ static hvmm_status_t vdev_cpu_interface_access_handler(uint32_t write, uint32_t 
         /* WRITE */
         	if (offset == GIC_OFFSET_GICC_EOIR) { // EOIR
 //        		ci_regs[0].GICC_IAR = -1;
+        		if(*pvalue != 34)
        		printH("vm:%d write eoir : ci_regs[0].GICC_IAR = 0x000003FF  %d\n",vmid, *pvalue);
 
         		ci_regs[vmid].GICC_IAR = 0x000003FF ;
@@ -402,7 +403,7 @@ static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, in
 	} else if (type == 2) {
 		return ci_regs[vmn].GICC_IAR;
 
-	} else if (type == 3) { //add pending irq
+	} else if (type == 3) { //add pending irq to myself
 //		static struct cpu_interface_regs pending_ci_regs[NUM_GUESTS_STATIC][PENDING_MAX];
 //		static int countPending = 0;
 		printH("cur vm:%d, ", vmn);
@@ -440,6 +441,29 @@ static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, in
 
 	} else if (type == 5) {
 		return countPending[vmn];
+	} else if (type == 6) {
+		printH("cur vm:%d, ", vmn);
+		if(vmn ==0)
+			vmn = 1;
+		else if(vmn ==1)
+			vmn = 0;
+
+		int i = 0;
+		if(countPending[vmn] > PENDING_MAX){
+			printH("overflow pending interrupt\n");
+			for (i = 0; i< PENDING_MAX; i++)
+				printH("vm:%d [%d] %d\n",vmn, i,  pending_ci_regs[vmn][i].GICC_IAR);
+		}
+//		static struct cpu_interface_regs ci_regs[NUM_GUESTS_STATIC];
+//		static struct cpu_interface_regs pending_ci_regs[NUM_GUESTS_STATIC][PENDING_MAX];
+//		static int countPending[NUM_GUESTS_STATIC] ;
+		printH("target vm:%d Add pending irq %d \n", vmn, irq);
+		pending_ci_regs[vmn][countPending[vmn]].GICC_IAR = irq;
+		countPending[vmn]++;
+//	    addr = (CPU_INTERFACE_BASE_ADDR + GIC_OFFSET_GICC_HPPIR);
+//	    *addr = irq;
+
+		return HVMM_STATUS_SUCCESS;
 	}
 	return HVMM_STATUS_SUCCESS;
 }
