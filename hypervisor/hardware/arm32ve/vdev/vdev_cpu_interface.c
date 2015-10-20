@@ -406,10 +406,10 @@ static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, in
 //		static struct cpu_interface_regs pending_ci_regs[NUM_GUESTS_STATIC][PENDING_MAX];
 //		static int countPending = 0;
 		printH("cur vm:%d, ", vmn);
-		if(vmn ==0)
-			vmn = 1;
-		else if(vmn ==1)
-			vmn = 0;
+//		if(vmn ==0)
+//			vmn = 1;
+//		else if(vmn ==1)
+//			vmn = 0;
 
 		int i = 0;
 		if(countPending[vmn] > PENDING_MAX){

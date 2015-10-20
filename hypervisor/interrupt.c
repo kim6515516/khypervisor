@@ -304,6 +304,8 @@ void changeGuestMode(int irq, int virq, void *current_regs)
         {
         	printH("Guest%d IRQ is disalbe\n", cur_vm_number);
         	vdev_execute(0, ci, 3, virq); //irq pendding
+        	_host_ops->enable(irq);
+        	_host_ops->disable(irq);
 //        	while(1);
         	return;
         }
@@ -409,27 +411,27 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 
 //    printH("isr IRQ : %d\n", irq);
 
-    _host_ops->configure(38);
-    _host_ops->enable(38);
-    _host_ops->configure(39);
-    _host_ops->enable(39);
-
-    _host_ops->configure(34);
-     _host_ops->enable(34);
+//    _host_ops->configure(38);
+//    _host_ops->enable(38);
+//    _host_ops->configure(39);
+//    _host_ops->enable(39);
+//
+//    _host_ops->configure(34);
+//     _host_ops->enable(34);
 
      if(irq == 34) {
-
-     	_host_ops->disable(34);
+//    	 _host_ops->end(34);
+//     	_host_ops->disable(34);
      virq = 34;
      }
 
     if(irq == 38) {
-    	_host_ops->disable(38);
+//    	_host_ops->disable(38);
     virq = 37;
     }
 
     if(irq == 39) {
-    	_host_ops->disable(39);
+//    	_host_ops->disable(39);
     virq = 37;
     }
 

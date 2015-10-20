@@ -198,6 +198,7 @@ vmid_t guest_next_vmid(vmid_t ofvmid)
     vmid_t next = VMID_INVALID;
 
     uint32_t cpu = smp_processor_id();
+    return 0;
 #ifdef _CPUISOLATED_
     return cpu;
 #endif
