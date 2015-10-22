@@ -18,6 +18,7 @@ static hvmm_status_t host_interrupt_init(void)
         uart_print_hex32(hcr);
         uart_print("\n\r");
         hcr |= HCR_IMO | HCR_FMO;  // Overrides the CPSR.I/F
+//        hcr |= HCR_TWI | HCR_TWE;  // trap wif, wef
         write_hcr(hcr);
         hcr = read_hcr();
         uart_print("hcr:");

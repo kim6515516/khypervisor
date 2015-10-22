@@ -79,7 +79,7 @@ static struct memmap_desc guest1_device_md[] = {
 	    { "v2m_serial2", 0x1C0B0000, 0x1C0B0000, SZ_4K, MEMATTR_DM },
 	    { "v2m_serial3", 0x1C0C0000, 0x1C0C0000, SZ_4K, MEMATTR_DM },
 	    { "wdt", 0x1C0F0000, 0x1C0F0000, SZ_4K, MEMATTR_DM },
-	    { "v2m_timer01(sp804)", 0x1C110000, 0x1C110000, SZ_4K,
+	    { "v2m_timer01(sp804)", 0x1C110000, 0x1C120000, SZ_4K,
 	            MEMATTR_DM },
 	    { "v2m_timer23", 0x1C120000, 0x1C120000, SZ_4K, MEMATTR_DM },
 	    { "rtc", 0x1C170000, 0x1C170000, SZ_4K, MEMATTR_DM },
@@ -179,7 +179,7 @@ static struct memmap_desc guest1_memory_md[] = {
  */
 static struct memmap_desc guest2_memory_md[] = {
     /* 256MB */
-    {"start", 0x00000000, 0, 0x10000000,
+    {"start", 0x00000000, 0, 0x40000000,
      MEMATTR_NORMAL_OWB | MEMATTR_NORMAL_IWB
     },
     {0, 0, 0, 0,  0},
@@ -365,7 +365,7 @@ void setup_interrupt()
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 31, 31);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 32, 32);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 33, 33);
-    DECLARE_VIRQMAP(_guest_virqmap, 1, 34, 34);
+    DECLARE_VIRQMAP(_guest_virqmap, 1, 35, 34);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 35, 35);
     DECLARE_VIRQMAP(_guest_virqmap, 1, 36, 36);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 37, 38);

@@ -21,6 +21,67 @@
 #define GIC_OFFSET_GICC_IIDR 0x00FC
 #define GIC_OFFSET_GICC_DIR 0x1000
 
+
+
+#define PENDING_MAX 50
+
+int queue[NUM_GUESTS_STATIC][PENDING_MAX];
+int front[NUM_GUESTS_STATIC], rear[NUM_GUESTS_STATIC];
+
+void init_queue(int vmn) {
+	front[vmn] = rear[vmn] = 0;
+}
+
+void clear_queue(int vmn) {
+	front[vmn] = rear[vmn];
+}
+
+int put(int k, int vmn) {
+	if ((rear[vmn] + 1) % PENDING_MAX == front[vmn]) {
+//		printH("\n   Queue overflow.");
+		return -1;
+	}
+	queue[vmn][rear[vmn]] = k;
+	rear[vmn] = ++rear[vmn] % PENDING_MAX;
+	return k;
+}
+int is_get(int vmn) {
+	if (front[vmn] == rear[vmn]) {
+//		printH("\n   Queue underflow.");
+		return -1;
+	} else
+		return 1;
+}
+int get(int vmn) {
+	int i;
+	if (front[vmn] == rear[vmn]) {
+//		printH("\n   Queue underflow.");
+		return -1;
+	}
+	i = queue[vmn][front[vmn]];
+	front[vmn] = ++front[vmn] % PENDING_MAX;
+	return i;
+}
+
+void print_queue(int vmn) {
+	int i;
+	printH("\n   Queue contents : Front -----> Rear\n");
+	for (i = front[vmn]; i != rear[vmn]; i = ++i % PENDING_MAX)
+		printH("%d ", queue[vmn][i]);
+	printH("\n");
+}
+static int countPending[NUM_GUESTS_STATIC] ;
+
+
+
+
+
+
+
+
+
+
+
 struct cpu_interface_regs {
     uint32_t GICC_CTLR; /* 0x00  CPU Interface Control Register */
     uint32_t GICC_PMR; /* 0x04  Interrupt Priority Mask Register */
@@ -47,11 +108,11 @@ struct cpu_interface_handler_entry {
     uint32_t offset;
     vdev_callback_t handler;
 };
-#define PENDING_MAX 50
+
 static struct cpu_interface_regs ci_regs[NUM_GUESTS_STATIC];
 static struct cpu_interface_regs pending_ci_regs[NUM_GUESTS_STATIC][PENDING_MAX];
 
-static int countPending[NUM_GUESTS_STATIC] ;
+
 
 static struct vdev_memory_map _vdev_cpu_interface_info = {
    .base = CPU_INTERFACE_BASE_ADDR,
@@ -208,7 +269,7 @@ static hvmm_status_t vdev_cpu_interface_access_handler(uint32_t write, uint32_t 
     	}
         if (offset == GIC_OFFSET_GICC_IAR) {
         	*pvalue = ci_regs[vmid].GICC_IAR;
-        	if( (ci_regs[vmid].GICC_IAR!=34) && (ci_regs[vmid].GICC_IAR!=1023))
+        	if( vmid == 1)
         		printH("vm: %d read iar: GICC_IAR %d\n", vmid, *pvalue);
         }
 //    	printH("1111111111111 %x\n", *pvalue);
@@ -216,7 +277,7 @@ static hvmm_status_t vdev_cpu_interface_access_handler(uint32_t write, uint32_t 
         /* WRITE */
         	if (offset == GIC_OFFSET_GICC_EOIR) { // EOIR
 //        		ci_regs[0].GICC_IAR = -1;
-        		if(*pvalue != 34)
+        		if(vmid == 1)
        		printH("vm:%d write eoir : ci_regs[0].GICC_IAR = 0x000003FF  %d\n",vmid, *pvalue);
 
         		ci_regs[vmid].GICC_IAR = 0x000003FF ;
@@ -226,7 +287,13 @@ static hvmm_status_t vdev_cpu_interface_access_handler(uint32_t write, uint32_t 
         				*addr = 38;
         			if(vmid ==1)
         				*addr = 39;
-        		} else
+        		} else if ( *pvalue == 34){
+        			if(vmid == 0)
+        				*addr = 34;
+        			if(vmid ==1)
+        				*addr = 35;
+
+        		}else
         			*addr = *pvalue;
 
 
@@ -363,7 +430,7 @@ static hvmm_status_t vdev_cpu_interface_reset(void)
     }
     return HVMM_STATUS_SUCCESS;
 }
-int isAdaptPending = 0;
+int isAdaptPending[NUM_GUESTS_STATIC];
 static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, int irq)
 {
 	volatile int *addr;
@@ -382,21 +449,22 @@ static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, in
 	    return HVMM_STATUS_SUCCESS;
 
 	} else if (type == 1) {  // inject
-		if(isAdaptPending == 1)
+		if(isAdaptPending[vmn] == 1)
 		{
-			isAdaptPending=0;
+			isAdaptPending[vmn]=0;
 			return HVMM_STATUS_SUCCESS;
 		}
 
 		if(ci_regs[vmn].GICC_IAR != 0x000003FF) {
+			printH("vm:%d vdev_cpu_interface_execute, inject-reject1: irq: %d pen: %d\n", vmn, irq, ci_regs[vmn].GICC_IAR );
 			ci_regs[vmn].GICC_IAR = irq;
-			printH("vm:%d vdev_cpu_interface_execute, inject-reject: irq: %d\n", vmn, irq);
+
 			return HVMM_STATUS_SUCCESS;
 		} else {
 		ci_regs[vmn].GICC_IAR = irq;
 
 
-		if(irq != 34)
+		if(vmn == 1)
 			printH("vm:%d vdev_cpu_interface_execute, inject-ok: irq: %d\n", vmn, irq);
 		}
 		return HVMM_STATUS_SUCCESS;
@@ -404,43 +472,41 @@ static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, in
 		return ci_regs[vmn].GICC_IAR;
 
 	} else if (type == 3) { //add pending irq to myself
-//		static struct cpu_interface_regs pending_ci_regs[NUM_GUESTS_STATIC][PENDING_MAX];
-//		static int countPending = 0;
-		printH("cur vm:%d, ", vmn);
-//		if(vmn ==0)
-//			vmn = 1;
-//		else if(vmn ==1)
-//			vmn = 0;
 
-		int i = 0;
-		if(countPending[vmn] > PENDING_MAX){
-			printH("overflow pending interrupt\n");
-			for (i = 0; i< PENDING_MAX; i++)
-				printH("vm:%d [%d] %d\n",vmn, i,  pending_ci_regs[vmn][i].GICC_IAR);
-		}
-//		static struct cpu_interface_regs ci_regs[NUM_GUESTS_STATIC];
-//		static struct cpu_interface_regs pending_ci_regs[NUM_GUESTS_STATIC][PENDING_MAX];
-//		static int countPending[NUM_GUESTS_STATIC] ;
-		printH("target vm:%d Add pending irq %d \n", vmn, irq);
-		pending_ci_regs[vmn][countPending[vmn]].GICC_IAR = irq;
-		countPending[vmn]++;
-//	    addr = (CPU_INTERFACE_BASE_ADDR + GIC_OFFSET_GICC_HPPIR);
-//	    *addr = irq;
 
+//		int i = 0;
+//		if(countPending[vmn] > PENDING_MAX){
+//			printH("overflow pending interrupt\n");
+//			for (i = 0; i< PENDING_MAX; i++)
+//				printH("vm:%d [%d] %d\n",vmn, i,  pending_ci_regs[vmn][i].GICC_IAR);
+//		}
+//
+////		printH("cur vm:%d, ", vmn);
+////		printH("target vm:%d Add pending irq %d \n", vmn, irq);
+//		pending_ci_regs[vmn][countPending[vmn]].GICC_IAR = irq;
+//		countPending[vmn]++;
+
+		put(irq, vmn);
 		return HVMM_STATUS_SUCCESS;
 
 	} else if (type == 4) { //adapt pending irq
 
 
-		countPending[vmn]--;
+//		countPending[vmn]--;
+//
+//		ci_regs[vmn].GICC_IAR = pending_ci_regs[vmn][countPending[vmn]].GICC_IAR;
+//		printH("vm:%d pop pending irq %d \n", vmn, pending_ci_regs[vmn][countPending[vmn]].GICC_IAR);
+//		isAdaptPending[vmn] = 1;
+//		return pending_ci_regs[vmn][countPending[vmn]].GICC_IAR;
 
-		ci_regs[vmn].GICC_IAR = pending_ci_regs[vmn][countPending[vmn]].GICC_IAR;
-		printH("vm:%d pop pending irq %d \n", vmn, pending_ci_regs[vmn][countPending[vmn]].GICC_IAR);
-		isAdaptPending = 1;
-		return pending_ci_regs[vmn][countPending[vmn]].GICC_IAR;
+		isAdaptPending[vmn] = 1;
+		return get(vmn);
 
 	} else if (type == 5) {
-		return countPending[vmn];
+		vmn = irq;
+//		return countPending[vmn];
+		return is_get(vmn);
+
 	} else if (type == 6) {
 		printH("cur vm:%d, ", vmn);
 		if(vmn ==0)
@@ -448,23 +514,61 @@ static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, in
 		else if(vmn ==1)
 			vmn = 0;
 
-		int i = 0;
-		if(countPending[vmn] > PENDING_MAX){
-			printH("overflow pending interrupt\n");
-			for (i = 0; i< PENDING_MAX; i++)
-				printH("vm:%d [%d] %d\n",vmn, i,  pending_ci_regs[vmn][i].GICC_IAR);
-		}
+//		int i = 0;
+//		if(countPending[vmn] > PENDING_MAX){
+//			printH("overflow pending interrupt\n");
+//			for (i = 0; i< PENDING_MAX; i++)
+//				printH("vm:%d [%d] %d\n",vmn, i,  pending_ci_regs[vmn][i].GICC_IAR);
+//		}
 //		static struct cpu_interface_regs ci_regs[NUM_GUESTS_STATIC];
 //		static struct cpu_interface_regs pending_ci_regs[NUM_GUESTS_STATIC][PENDING_MAX];
 //		static int countPending[NUM_GUESTS_STATIC] ;
 		printH("target vm:%d Add pending irq %d \n", vmn, irq);
-		pending_ci_regs[vmn][countPending[vmn]].GICC_IAR = irq;
-		countPending[vmn]++;
+//		pending_ci_regs[vmn][countPending[vmn]].GICC_IAR = irq;
+//		countPending[vmn]++;
 //	    addr = (CPU_INTERFACE_BASE_ADDR + GIC_OFFSET_GICC_HPPIR);
 //	    *addr = irq;
+		put(irq, vmn);
+		return HVMM_STATUS_SUCCESS;
+	} else if (type == 7) {
+		vmn = irq;
+//		int i =0 ;
+//			for (i = 0; i< countPending[vmn]; i++)
+//				printH("vm:%d [%d] %d\n",vmn, i,  pending_ci_regs[vmn][i].GICC_IAR);
+//
+//		countPending[vmn]--;
+//
+//		ci_regs[vmn].GICC_IAR = pending_ci_regs[vmn][countPending[vmn]].GICC_IAR;
+////		printH("vm:%d pop pending irq %d \n", vmn, pending_ci_regs[vmn][countPending[vmn]].GICC_IAR);
+////		isAdaptPending[vmn] = 1;
+//		return pending_ci_regs[vmn][countPending[vmn]].GICC_IAR;
+//		print_queue(vmn);
+		return get(vmn);
+//		return HVMM_STATUS_SUCCESS;
 
+	} else if (type == 8) {  // inject
+		int cur_vm = guest_current_vmid();
+		vmn = (cur_vm + 1) % 2 ;
+//		if(isAdaptPending[vmn] == 1)
+//		{
+//			isAdaptPending[vmn]=0;
+//			return HVMM_STATUS_SUCCESS;
+//		}
+
+		if(ci_regs[vmn].GICC_IAR != 0x000003FF) {
+			ci_regs[vmn].GICC_IAR = irq;
+//			printH("next vm:%d vdev_cpu_interface_execute, inject-reject8: irq: %d\n", vmn, irq);
+			return HVMM_STATUS_SUCCESS;
+		} else {
+		ci_regs[vmn].GICC_IAR = irq;
+
+
+//		if(irq != 34)
+//			printH("next vm:%d vdev_cpu_interface_execute, inject-ok8: irq: %d\n", vmn, irq);
+		}
 		return HVMM_STATUS_SUCCESS;
 	}
+
 	return HVMM_STATUS_SUCCESS;
 }
 

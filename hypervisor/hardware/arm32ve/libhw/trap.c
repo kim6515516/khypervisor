@@ -154,6 +154,14 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
     switch (ec) {
     case TRAP_EC_ZERO_UNKNOWN:
     case TRAP_EC_ZERO_WFI_WFE:
+//    	printH("TRAP: WFI, WEF\n");
+        if (regs->cpsr & 0x20) /* Thumb */
+        	regs->pc += 2;
+        else
+        	regs->pc += 4;
+        guest_perform_switch(regs);
+        return HYP_RESULT_ERET;
+        break;
     case TRAP_EC_ZERO_MCR_MRC_CP15:
     case TRAP_EC_ZERO_MCRR_MRRC_CP15:
     case TRAP_EC_ZERO_MCR_MRC_CP14:

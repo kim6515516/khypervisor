@@ -251,6 +251,60 @@ static void context_copy_regs(struct arch_regs *regs_dst,
         regs_dst->gpr[i] = regs_src->gpr[i];
 }
 static struct guest_struct *target;
+void changeGuestMode2(int irq, int virq, void *current_regs, int nextVmn)
+{
+//	struct arch_regs *regs = (struct arch_regs *)current_regs;
+    int i = 0;
+	hvmm_status_t ret = HVMM_STATUS_SUCCESS;
+//    guest_hw_dump_extern(0x4, current_regs);
+//    printH("enter changeGuest2 mode IRQ : %d\n", irq);
+    uint32_t lr, sp;
+//    int cur_vm_number = guest_current_vmid();
+    target = get_guest_pointer(nextVmn);
+    if (target)
+    	;
+    else
+    	printH("target is null : %d\n", irq);
+
+
+    int cur_vm_number = guest_current_vmid();
+    int ci  = vdev_find_tag(0, 55);
+    int check = target->regs.cpsr & (0x1 << 7);
+    int guestmode = target->regs.cpsr & 0x1F;
+
+    target->context.regs_banked.spsr_irq = target->regs.cpsr;
+    target->regs.cpsr = target->regs.cpsr & ~(0x1 << 5);
+    target->regs.cpsr = target->regs.cpsr | (0x1 << 7);
+//    target->regs.cpsr = target->regs.cpsr & ~(0x1F);
+
+    target->regs.cpsr = target->regs.cpsr & ~(0x1F);
+    target->regs.cpsr = target->regs.cpsr | 0x12;
+
+    target->context.regs_banked.lr_irq = target->regs.pc + 4;
+
+    if (guest_current_vmid() == 0)  // linux
+    	target->regs.pc = 0xffff0018;
+    else // bm guest
+    	target->regs.pc = 0xffff0018;
+
+    volatile int *addr;
+    addr = (0x2C002000 + 0x20);
+//    *addr = 34;
+//    printH("changeGuest iar : %x\n", *addr);
+
+
+//    printH("find dev : %d \n", ci);
+    vdev_execute(0, ci, 8, virq); //irq inject
+//    printH("changeGuest2. end\n");
+//    context_save_banked(&target->context.regs_banked);
+//    context_save_cops(&target->context.regs_cop);
+
+//    perform_switch_forced2(target, 0);
+//    regs->cpsr = target->regs.cpsr;
+//    regs->lr = target->regs.lr;
+
+}
+
 void changeGuestMode(int irq, int virq, void *current_regs, int nextVmn)
 {
 	struct arch_regs *regs = (struct arch_regs *)current_regs;
@@ -259,8 +313,8 @@ void changeGuestMode(int irq, int virq, void *current_regs, int nextVmn)
 //    guest_hw_dump_extern(0x4, current_regs);
 //    printH("enter changeGuest mode IRQ : %d\n", irq);
     uint32_t lr, sp;
-//    int cur_vm_number = guest_current_vmid();
-    target = get_guest_pointer(nextVmn);
+    int cur_vm_number = guest_current_vmid();
+    target = get_guest_pointer(cur_vm_number);
     if (target)
     	;
     else
@@ -277,7 +331,7 @@ void changeGuestMode(int irq, int virq, void *current_regs, int nextVmn)
 //    target->vmid = 0;
     context_copy_regs(target, regs);
 
-    int cur_vm_number = guest_current_vmid();
+//    int cur_vm_number = guest_current_vmid();
     int ci  = vdev_find_tag(0, 55);
      int check = target->regs.cpsr & (0x1 << 7);
      int guestmode = target->regs.cpsr & 0x1F;
@@ -411,6 +465,13 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
      virq = 34;
      }
 
+     if(irq == 35) {
+//    	 _host_ops->end(34);
+//     	_host_ops->disable(34);
+//    	 printH("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
+     virq = 34;
+     }
+
     if(irq == 38) {
 //    	_host_ops->disable(38);
     virq = 37;
@@ -425,35 +486,61 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
     	printH("second cpu isr.\n");
     	return ;
     }
+    int cur_vm_number = guest_current_vmid();
+    int next_vm_number = (cur_vm_number + 1 )%2;
+
+    target = get_guest_pointer(cur_vm_number);
 
     int check = target->regs.cpsr & (0x1 << 7);
      int guestmode = target->regs.cpsr & 0x1F;
-    int cur_vm_number = guest_current_vmid();
+
     int ci  = vdev_find_tag(0, 55);
-    int ispending = vdev_execute(0, ci, 5, irq); //irq pendding
+
+    int ispending = vdev_execute(0, ci, 5, next_vm_number); //irq pendding
 
     if(ispending > 0 && irq == 26) {
-
+//    	printH("next vm:%d enter pending inject irq:%d\n",next_vm_number, 26);
     	_host_ops->end(26);
 
-        if ( (check == 1) && ( guestmode == 0x11 ||  guestmode == 0x12 || guestmode == 0x17 || guestmode == 0x18 ))
+//        if (irq < MAX_PPI_IRQS) {
+//            if (_host_ppi_handlers[cpu][irq])
+//                _host_ppi_handlers[cpu][irq](irq, regs, 0);
+//        } else {
+//            if (_host_spi_handlers[irq])
+//                _host_spi_handlers[irq](irq, regs, 0);
+//        }
+
+        target = get_guest_pointer(next_vm_number);
+
+        int check = target->regs.cpsr & (0x1 << 7);
+         int guestmode = target->regs.cpsr & 0x1F;
+
+        if ( (check == (0x1 << 7)) && ( guestmode == 0x11 ||  guestmode == 0x12 || guestmode == 0x17 || guestmode == 0x18 ))
         {
-        	printH("fffff Guest%d IRQ is disalbe\n", cur_vm_number);
+//        	printH("fffff Guest%d IRQ is disalbe\n", cur_vm_number);
+        	        if (irq < MAX_PPI_IRQS) {
+        	            if (_host_ppi_handlers[cpu][irq])
+        	                _host_ppi_handlers[cpu][irq](irq, regs, 0);
+        	        } else {
+        	            if (_host_spi_handlers[irq])
+        	                _host_spi_handlers[irq](irq, regs, 0);
+        	        }
         	return;
         }
         else
 //        	printH("Guest%d IRQ not disalbe\n", cur_vm_number );
         	;
 
-    	irq = vdev_execute(0, ci, 4, 0);
-    	printH("#########vm:%d pendding irq inject!! irq: %d\n",cur_vm_number, irq);
+//    	irq = vdev_execute(0, ci, 4, 0);
+    	irq = vdev_execute(0, ci, 7, next_vm_number);
+//    	printH("#########cur vm:%d pendding irq inject!! irq: %d pecount:%d \n",cur_vm_number, irq, ispending);
 
-    	changeGuestMode(irq, irq, current_regs, cur_vm_number) ;
-    	if(irq != 37) {
+    	changeGuestMode2(irq, irq, current_regs, next_vm_number) ;
+    	if(irq != 37 && irq !=34) {
     		_host_ops->enable(irq);
     	}
-    	else {
-			if(cur_vm_number==0){
+    	else if(irq == 37){
+			if(next_vm_number==0){
 	//    		_host_ops->end(38);
 				_host_ops->enable(38);
 			}
@@ -462,20 +549,21 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 				_host_ops->enable(39);
 			}
     	}
+    	else if(irq == 34){
+			if(next_vm_number==0){
+	//    		_host_ops->end(38);
+				_host_ops->enable(34);
+			}
+			else{
+	//    		_host_ops->end(39);
+				_host_ops->enable(35);
+			}
+    	}
     	return;
     }
     else {
 
-		if ( (check == 1) && ( guestmode == 0x11 ||  guestmode == 0x12 || guestmode == 0x17 || guestmode == 0x18 ))
-		{
-			printH("Guest%d IRQ is disalbe\n", cur_vm_number);
-			vdev_execute(0, ci, 3, virq); //irq pendding
-			_host_ops->end(irq);
-			_host_ops->disable(irq);
-	//        	while(1);
-			return;
-		}
-		else
+
 
 
 		if((cur_vm_number==0) && (irq==39)){ // guest1, irq39
@@ -493,9 +581,44 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 			_host_ops->end(38);
 			_host_ops->disable(38);
 
-			printH("pending vmm:%d pirq:%d\n", cur_vm_number, irq);
+//			printH("pending vmm:%d pirq:%d\n", cur_vm_number, virq);
 			return;
 		}
+
+
+		if((cur_vm_number==0) && (irq==35)){ // guest1, irq39
+			virq = 34;
+			vdev_execute(0, ci, 6, virq); //irq pendding
+	//        	printH("Pending########################\n");
+//			printH("pending vmm:%d pirq:%d\n", cur_vm_number, irq);
+			_host_ops->end(35);
+			_host_ops->disable(35);
+			return;
+		}
+		if( (cur_vm_number==1) && (irq == 34)) { // guest0, irq38
+			virq = 34;
+			vdev_execute(0, ci, 6, virq); //irq pendding
+			_host_ops->end(34);
+			_host_ops->disable(34);
+
+//			printH("pending vmm:%d pirq:%d\n", cur_vm_number, virq);
+			return;
+		}
+
+
+
+		if ((irq!=26) && (check == (0x1 << 7)) && ( guestmode == 0x11 ||  guestmode == 0x12 || guestmode == 0x17 || guestmode == 0x18 ))
+		{
+//			printH("Guest%d IRQ is disalbe\n", cur_vm_number);
+			vdev_execute(0, ci, 3, virq); //irq pendding
+			_host_ops->end(irq);
+			_host_ops->disable(irq);
+	//        	while(1);
+			return;
+		}
+		else
+			;
+
     }
 
 

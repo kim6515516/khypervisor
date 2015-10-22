@@ -63,7 +63,7 @@ hvmm_status_t perform_switch(struct arch_regs *regs, vmid_t next_vmid)
     guest = &guests[next_vmid];
     _current_guest[cpu] = guest;
     _current_guest_vmid[cpu] = next_vmid;
-
+//    printH("next vm cpsr: %x, pc:%x\n", guest->regs.cpsr, guest->regs.pc);
     /* guest_hw_dump */
     if (_guest_module.ops->dump)
         _guest_module.ops->dump(GUEST_VERBOSE_LEVEL_3, &guest->regs);

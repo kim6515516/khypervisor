@@ -200,8 +200,8 @@ static void vgicd_changed_istatus(vmid_t vmid, uint32_t istatus,
         if (pirq != PIRQ_INVALID) {
             /* changed bit */
             if (istatus & (1 << bit)) {
-                printH("[%s : %d] enabled irq num is %d\n", __func__,
-                        __LINE__, bit + minirq);
+                printH("vmid %d, [%s : %d] enabled irq num is virq: %d pirq:%d\n", vmid, __func__,
+                        __LINE__, bit + minirq, pirq);
                 interrupt_host_configure(pirq);
                 interrupt_host_enable(pirq);
                 interrupt_guest_enable(vmid, pirq);

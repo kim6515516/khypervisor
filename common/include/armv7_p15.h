@@ -18,6 +18,8 @@
 #define HCR_FMO     0x8
 #define HCR_IMO     0x10
 #define HCR_VI      (0x1 << 7)
+#define HCR_TWI      (0x1 << 13)
+#define HCR_TWE      (0x1 << 14)
 
 /* 32bit case only */
 #define read_ttbr0()            ({ uint32_t rval; asm volatile(\
