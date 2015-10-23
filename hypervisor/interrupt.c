@@ -456,37 +456,40 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
     struct arch_regs *regs = (struct arch_regs *)current_regs;
     uint32_t cpu = smp_processor_id();
     int virq = -1;
-    virq = irq;
-
-
-     if(irq == 34) {
-//    	 _host_ops->end(34);
-//     	_host_ops->disable(34);
-     virq = 34;
-     }
-
-     if(irq == 35) {
-//    	 _host_ops->end(34);
-//     	_host_ops->disable(34);
-//    	 printH("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
-     virq = 34;
-     }
-
-    if(irq == 38) {
-//    	_host_ops->disable(38);
-    virq = 37;
-    }
-
-    if(irq == 39) {
-//    	_host_ops->disable(39);
-    virq = 37;
-    }
+    int pirq = -1;
+    int cur_vm_number = guest_current_vmid();
+//    virq = irq;
+    virq = interrupt_pirq_to_virq(cur_vm_number, irq);
+//    printH("cur_vm_number vmm:%d pirq:%d virq:%d\n", cur_vm_number, irq, virq);
+ // VIRQ_INVALID
+//     if(irq == 34) {
+////    	 _host_ops->end(34);
+////     	_host_ops->disable(34);
+//     virq = 34;
+//     }
+//
+//     if(irq == 35) {
+////    	 _host_ops->end(34);
+////     	_host_ops->disable(34);
+////    	 printH("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
+//     virq = 34;
+//     }
+//
+//    if(irq == 38) {
+////    	_host_ops->disable(38);
+//    virq = 37;
+//    }
+//
+//    if(irq == 39) {
+////    	_host_ops->disable(39);
+//    virq = 37;
+//    }
 
     if(cpu) {
     	printH("second cpu isr.\n");
     	return ;
     }
-    int cur_vm_number = guest_current_vmid();
+
     int next_vm_number = (cur_vm_number + 1 )%2;
 
     target = get_guest_pointer(cur_vm_number);
@@ -536,74 +539,87 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 //    	printH("#########cur vm:%d pendding irq inject!! irq: %d pecount:%d \n",cur_vm_number, irq, ispending);
 
     	changeGuestMode2(irq, irq, current_regs, next_vm_number) ;
-    	if(irq != 37 && irq !=34) {
-    		_host_ops->enable(irq);
-    	}
-    	else if(irq == 37){
-			if(next_vm_number==0){
-	//    		_host_ops->end(38);
-				_host_ops->enable(38);
-			}
-			else{
-	//    		_host_ops->end(39);
-				_host_ops->enable(39);
-			}
-    	}
-    	else if(irq == 34){
-			if(next_vm_number==0){
-	//    		_host_ops->end(38);
-				_host_ops->enable(34);
-			}
-			else{
-	//    		_host_ops->end(39);
-				_host_ops->enable(35);
-			}
-    	}
+
+    	pirq = interrupt_virq_to_pirq(next_vm_number, irq);
+		_host_ops->enable(pirq);
+//    	if(irq != 37 && irq !=34) {
+//    		_host_ops->enable(irq);
+//    	}
+//    	else if(irq == 37){
+//    		pirq = interrupt_virq_to_pirq(cur_vm_number, irq);
+//    		_host_ops->enable(pirq);
+////			if(next_vm_number==0){
+////	//    		_host_ops->end(38);
+////				_host_ops->enable(38);
+////			}
+////			else{
+////	//    		_host_ops->end(39);
+////				_host_ops->enable(39);
+////			}
+//    	}
+//    	else if(irq == 34){
+//    		pirq = interrupt_virq_to_pirq(cur_vm_number, irq);
+//    		_host_ops->enable(pirq);
+////			if(next_vm_number==0){
+////	//    		_host_ops->end(38);
+////				_host_ops->enable(34);
+////			}
+////			else{
+////	//    		_host_ops->end(39);
+////				_host_ops->enable(35);
+////			}
+//    	}
     	return;
-    }
-    else {
+    } else {
 
+    	if(irq != 26 && VIRQ_INVALID == virq){
 
+//    		     printH("cur_vm_number vmm:%d pirq:%d virq:%d\n", cur_vm_number, irq, virq);
+				virq = interrupt_pirq_to_virq(next_vm_number, irq);
+				vdev_execute(0, ci, 6, virq);
+				_host_ops->end(irq);
+				_host_ops->disable(irq);
+				return;
 
-
-		if((cur_vm_number==0) && (irq==39)){ // guest1, irq39
-			virq = 37;
-			vdev_execute(0, ci, 6, virq); //irq pendding
-	//        	printH("Pending########################\n");
+    	}
+//		if((cur_vm_number==0) && (irq==39)){ // guest1, irq39
+//			virq = 37;
+//			vdev_execute(0, ci, 6, virq); //irq pendding
+//	//        	printH("Pending########################\n");
 //			printH("pending vmm:%d pirq:%d\n", cur_vm_number, irq);
-			_host_ops->end(39);
-			_host_ops->disable(39);
-			return;
-		}
-		if( (cur_vm_number==1) && (irq == 38)) { // guest0, irq38
-			virq = 37;
-			vdev_execute(0, ci, 6, virq); //irq pendding
-			_host_ops->end(38);
-			_host_ops->disable(38);
-
+//			_host_ops->end(39);
+//			_host_ops->disable(39);
+//			return;
+//		}
+//		if( (cur_vm_number==1) && (irq == 38)) { // guest0, irq38
+//			virq = 37;
+//			vdev_execute(0, ci, 6, virq); //irq pendding
+//			_host_ops->end(38);
+//			_host_ops->disable(38);
+//
 //			printH("pending vmm:%d pirq:%d\n", cur_vm_number, virq);
-			return;
-		}
-
-
-		if((cur_vm_number==0) && (irq==35)){ // guest1, irq39
-			virq = 34;
-			vdev_execute(0, ci, 6, virq); //irq pendding
-	//        	printH("Pending########################\n");
+//			return;
+//		}
+//
+//
+//		if((cur_vm_number==0) && (irq==35)){ // guest1, irq39
+//			virq = 34;
+//			vdev_execute(0, ci, 6, virq); //irq pendding
+//	//        	printH("Pending########################\n");
 //			printH("pending vmm:%d pirq:%d\n", cur_vm_number, irq);
-			_host_ops->end(35);
-			_host_ops->disable(35);
-			return;
-		}
-		if( (cur_vm_number==1) && (irq == 34)) { // guest0, irq38
-			virq = 34;
-			vdev_execute(0, ci, 6, virq); //irq pendding
-			_host_ops->end(34);
-			_host_ops->disable(34);
-
+//			_host_ops->end(35);
+//			_host_ops->disable(35);
+//			return;
+//		}
+//		if( (cur_vm_number==1) && (irq == 34)) { // guest0, irq38
+//			virq = 34;
+//			vdev_execute(0, ci, 6, virq); //irq pendding
+//			_host_ops->end(34);
+//			_host_ops->disable(34);
+//
 //			printH("pending vmm:%d pirq:%d\n", cur_vm_number, virq);
-			return;
-		}
+//			return;
+//		}
 
 
 
