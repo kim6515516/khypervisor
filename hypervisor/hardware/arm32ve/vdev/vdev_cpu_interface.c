@@ -65,6 +65,8 @@ int get(int vmn) {
 
 void print_queue(int vmn) {
 	int i;
+	if(is_get(vmn) == -1)
+		return;
 	printH("\n   Queue contents : Front -----> Rear\n");
 	for (i = front[vmn]; i != rear[vmn]; i = ++i % PENDING_MAX)
 		printH("%d ", queue[vmn][i]);
@@ -270,7 +272,7 @@ static hvmm_status_t vdev_cpu_interface_access_handler(uint32_t write, uint32_t 
         if (offset == GIC_OFFSET_GICC_IAR) {
         	*pvalue = ci_regs[vmid].GICC_IAR;
 //        	if( vmid == 1)
-//        		printH("vm: %d read iar: GICC_IAR %d\n", vmid, *pvalue);
+//   		printH("vm: %d read iar: GICC_IAR %d\n", vmid, *pvalue);
         }
 //    	printH("1111111111111 %x\n", *pvalue);
        } else {
@@ -294,13 +296,13 @@ static hvmm_status_t vdev_cpu_interface_access_handler(uint32_t write, uint32_t 
 //        				*addr = 35;
 //
 //        		}else
-//        			*addr = *pvalue;
-
-        		int pirq = interrupt_virq_to_pirq(vmid, *pvalue);
-        		if(pirq != PIRQ_INVALID)
-        			*addr = pirq;
-        		else
         			*addr = *pvalue;
+
+//        		int pirq = interrupt_virq_to_pirq(vmid, *pvalue);
+//        		if(pirq != PIRQ_INVALID)
+//        			*addr = pirq;
+//        		else
+//        			*addr = *pvalue;
 //        		*daddr = *pvalue;
 //                int *dir = 0x2c001000;
 //                *dir = *pvalue;
@@ -453,15 +455,17 @@ static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, in
 	    return HVMM_STATUS_SUCCESS;
 
 	} else if (type == 1) {  // inject
-		if(isAdaptPending[vmn] == 1)
-		{
-			isAdaptPending[vmn]=0;
-			return HVMM_STATUS_SUCCESS;
-		}
+//		if(isAdaptPending[vmn] == 1)
+//		{
+//			isAdaptPending[vmn]=0;
+//			return HVMM_STATUS_SUCCESS;
+//		}
 
 		if(ci_regs[vmn].GICC_IAR != 0x000003FF) {
 			printH("vm:%d vdev_cpu_interface_execute, inject-reject1: irq: %d pen: %d\n", vmn, irq, ci_regs[vmn].GICC_IAR );
-			ci_regs[vmn].GICC_IAR = irq;
+//			ci_regs[vmn].GICC_IAR = irq;
+			if(irq != ci_regs[vmn].GICC_IAR)
+				put(irq, vmn);
 
 			return HVMM_STATUS_SUCCESS;
 		} else {
@@ -473,7 +477,7 @@ static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, in
 		}
 		return HVMM_STATUS_SUCCESS;
 	} else if (type == 2) {
-		return ci_regs[vmn].GICC_IAR;
+		return HVMM_STATUS_SUCCESS;
 
 	} else if (type == 3) { //add pending irq to myself
 
@@ -509,6 +513,7 @@ static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, in
 	} else if (type == 5) {
 		vmn = irq;
 //		return countPending[vmn];
+//		print_queue(vmn);
 		return is_get(vmn);
 
 	} else if (type == 6) {

@@ -314,19 +314,20 @@ void setup_interrupt()
      *  vimm-0, pirq-41, virq-41 = MCI - pl180
      *  vimm-0, pirq-42, virq-42 = MCI - pl180
      */
-//    for (i=0 ; i< MAX_IRQS; i++) {
-//    	if(i != 26)
-//    		DECLARE_VIRQMAP(_guest_virqmap, 0, i, i);
-//    }
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 1, 1);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 16, 16);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 17, 17);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 18, 18);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 19, 19);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 31, 31);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 32, 32);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 33, 33);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 30, 30);
+    for (i=0 ; i< MAX_IRQS; i++) {
+    	if(i != 26 )
+    		DECLARE_VIRQMAP(_guest_virqmap, 0, i, i);
+
+    }
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 1, 1);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 16, 16);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 17, 17);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 18, 18);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 19, 19);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 31, 31);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 32, 32);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 33, 33);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 30, 30);
     DECLARE_VIRQMAP(_guest_virqmap, 0, 34, 34);
 //    DECLARE_VIRQMAP(_guest_virqmap, 0, 35, 35);
     DECLARE_VIRQMAP(_guest_virqmap, 0, 36, 36);
@@ -334,26 +335,26 @@ void setup_interrupt()
 //
 //    DECLARE_VIRQMAP(_guest_virqmap, 0, 37, 37);
     DECLARE_VIRQMAP(_guest_virqmap, 0, 38, 37);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 39, 39);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 40, 40);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 39, 39);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 40, 40);
 //
-////    DECLARE_VIRQMAP(_guest_virqmap, 0, 37, 38);
+
 ////    DECLARE_VIRQMAP(_guest_virqmap, 0, 38, 37);
 ////    DECLARE_VIRQMAP(_guest_virqmap, 1, 39, 37);
 ////    DECLARE_VIRQMAP(_guest_virqmap, 2, 40, 37);
 ////    DECLARE_VIRQMAP(_guest_virqmap, 3, 48, 37);
     DECLARE_VIRQMAP(_guest_virqmap, 0, 41, 41);
     DECLARE_VIRQMAP(_guest_virqmap, 0, 42, 42);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 43, 43);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 43, 43);
     DECLARE_VIRQMAP(_guest_virqmap, 0, 44, 44);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 45, 45);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 46, 46);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 47, 47);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 48, 48);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 49, 49);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 50, 50);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 51, 51);
-//    DECLARE_VIRQMAP(_guest_virqmap, 0, 69, 69);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 45, 45);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 46, 46);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 47, 47);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 48, 48);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 49, 49);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 50, 50);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 51, 51);
+    DECLARE_VIRQMAP(_guest_virqmap, 0, 69, 69);
 //
 //
 //
@@ -365,18 +366,18 @@ void setup_interrupt()
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 31, 31);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 32, 32);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 33, 33);
-    DECLARE_VIRQMAP(_guest_virqmap, 1, 35, 34);
-//    DECLARE_VIRQMAP(_guest_virqmap, 2, 35, 35);
-    DECLARE_VIRQMAP(_guest_virqmap, 1, 36, 36);
-//    DECLARE_VIRQMAP(_guest_virqmap, 2, 37, 38);
-//    DECLARE_VIRQMAP(_guest_virqmap, 2, 38, 37);
-    DECLARE_VIRQMAP(_guest_virqmap, 1, 39, 37);
-//    DECLARE_VIRQMAP(_guest_virqmap, 2, 40, 37);
-//    DECLARE_VIRQMAP(_guest_virqmap, 2, 48, 37);
-    DECLARE_VIRQMAP(_guest_virqmap, 1, 41, 41);
-    DECLARE_VIRQMAP(_guest_virqmap, 1, 42, 42);
-//    DECLARE_VIRQMAP(_guest_virqmap, 2, 43, 43);
-    DECLARE_VIRQMAP(_guest_virqmap, 1, 44, 44);
+//    DECLARE_VIRQMAP(_guest_virqmap, 1, 35, 34);
+////    DECLARE_VIRQMAP(_guest_virqmap, 2, 35, 35);
+//    DECLARE_VIRQMAP(_guest_virqmap, 1, 36, 36);
+////    DECLARE_VIRQMAP(_guest_virqmap, 2, 37, 38);
+////    DECLARE_VIRQMAP(_guest_virqmap, 2, 38, 37);
+//    DECLARE_VIRQMAP(_guest_virqmap, 1, 39, 37);
+////    DECLARE_VIRQMAP(_guest_virqmap, 2, 40, 37);
+////    DECLARE_VIRQMAP(_guest_virqmap, 2, 48, 37);
+//    DECLARE_VIRQMAP(_guest_virqmap, 1, 41, 41);
+//    DECLARE_VIRQMAP(_guest_virqmap, 1, 42, 42);
+////    DECLARE_VIRQMAP(_guest_virqmap, 2, 43, 43);
+//    DECLARE_VIRQMAP(_guest_virqmap, 1, 44, 44);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 45, 45);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 46, 46);
 //    DECLARE_VIRQMAP(_guest_virqmap, 2, 47, 47);

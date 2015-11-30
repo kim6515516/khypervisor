@@ -229,7 +229,7 @@ hvmm_status_t virq_inject_emulator(vmid_t vmid, uint32_t virq,
     hvmm_status_t result = HVMM_STATUS_BUSY;
     int i;
     struct virq_entry *q = &_guest_virqs[vmid][0];
-    printH("virq_inject_emulator: virq: %d\n", virq);
+//    printH("virq_inject_emulator: virq: %d\n", virq);
     /* Interrupt occurs to the same virtual machine running guest;Then,
      * we directly inject into guest. If it's not running guest's interrupt,
      * we save interrupt in _guest_virqs due to preventing loss of

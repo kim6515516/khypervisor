@@ -177,10 +177,10 @@ void linuxloader_setup_atags(uint32_t src)
 {
     char *commandline =
 /* mmc-rtsm */
-    /*
-     * "root=/dev/mmcblk0 rw ip=dhcp "
-     * "rw ip=dhcp earlyprintk console=ttyAMA0 mem=256M";
-     */
+
+//      "root=/dev/mmcblk0 rw ip=dhcp rootfstype=ext3 "
+//     "rw ip=dhcp earlyprintk console=ttyAMA0 mem=256M";
+
 /* android-rtsm */
     /*
      * "console=tty0 console=ttyAMA0,38400n8 rootwait ro init=/init "
@@ -193,7 +193,7 @@ void linuxloader_setup_atags(uint32_t src)
      */
 /* ramdisk-rtsm */
 
-     "root=/dev/ram rw earlyprintk console=ttyAMA0 "
+     "root=/dev/ram rw earlyprintk console=ttyAMA0 ip=dhcp "
      "mem=256M rdinit=/sbin/init";
 
 /* android-arndale board */
