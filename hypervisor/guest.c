@@ -83,9 +83,9 @@ hvmm_status_t perform_switch_forced2(struct guest_struct *guest, vmid_t next_vmi
     /* _curreng_guest_vmid -> next_vmid */
 
     hvmm_status_t result = HVMM_STATUS_SUCCESS;
-//    vdev_restore(0);
+    vdev_restore(next_vmid);
 //    interrupt_restore(0);
-//    memory_restore(0);
+    memory_restore(next_vmid);
     guest_restore(guest, &guest->regs);
 
     return result;
@@ -96,10 +96,10 @@ hvmm_status_t perform_switch_forced(struct arch_regs *regs, vmid_t next_vmid)
     /* _curreng_guest_vmid -> next_vmid */
 
     hvmm_status_t result = HVMM_STATUS_SUCCESS;
-    vdev_restore(0);
-    interrupt_restore(0);
-    memory_restore(0);
-    guest_restore(regs, 0);
+    vdev_restore(next_vmid);
+    interrupt_restore(next_vmid);
+    memory_restore(next_vmid);
+    guest_restore(regs, next_vmid);
 
     return result;
 }

@@ -129,7 +129,7 @@ static hvmm_status_t gic_init_baseaddr(uint32_t *va_base)
      * Other architectures with GICv2 support will be further
      * listed and added for support later
      */
-    if ((midr & MIDR_MASK_PPN) == MIDR_PPN_CORTEXA15) {
+//    if ((midr & MIDR_MASK_PPN) == MIDR_PPN_CORTEXA15) {
         /* fall-back to periphbase addr from cbar */
         if (va_base == 0) {
             va_base = (uint32_t *)(uint32_t)(gic_periphbase_pa() & \
@@ -145,13 +145,13 @@ static hvmm_status_t gic_init_baseaddr(uint32_t *va_base)
         _gic.ba_gicv = (uint32_t *)(_gic.baseaddr + GIC_OFFSET_GICV);
         _gic.ba_gicvi = (uint32_t *)(_gic.baseaddr + GIC_OFFSET_GICVI);
         result = HVMM_STATUS_SUCCESS;
-    } else {
-        uart_print("GICv2 Unsupported\n\r");
-        uart_print("midr.ppn:");
-        uart_print_hex32(midr & MIDR_MASK_PPN);
-        uart_print("\n\r");
-        result = HVMM_STATUS_UNSUPPORTED_FEATURE;
-    }
+//    } else {
+//        uart_print("GICv2 Unsupported\n\r");
+//        uart_print("midr.ppn:");
+//        uart_print_hex32(midr & MIDR_MASK_PPN);
+//        uart_print("\n\r");
+//        result = HVMM_STATUS_UNSUPPORTED_FEATURE;
+//    }
     HVMM_TRACE_EXIT();
     return result;
 }
@@ -242,7 +242,10 @@ static hvmm_status_t gic_init_cpui(void)
     _gic.ba_gicc[GICC_PMR] = 0xFF;
     _gic.ba_gicc[GICC_BPR] = 0x0;
     /* Enable signaling of interrupts and GICC_EOIR only drops priority */
-    _gic.ba_gicc[GICC_CTLR] = GICC_CTL_ENABLE | GICC_CTL_EOI;
+//    _gic.ba_gicc[GICC_CTLR] = GICC_CTL_ENABLE | GICC_CTL_EOI;
+
+    _gic.ba_gicc[GICC_CTLR] = GICC_CTL_ENABLE;// | GICC_CTL_EOI;
+
     result = HVMM_STATUS_SUCCESS;
     return result;
 }

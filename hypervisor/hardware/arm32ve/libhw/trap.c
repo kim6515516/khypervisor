@@ -127,6 +127,15 @@ static void _trap_dump_bregs(void)
  * If hypervisor can b handled the exception then it returns HYP_RESULT_ERET.
  * If not, hypervisor should be stopped into trap_error in handler.
  */
+#include <asm_io.h>
+static void context_save_cops(struct regs_cop *regs_cop)
+{
+    regs_cop->vbar = read_vbar();
+    regs_cop->ttbr0 = read_ttbr0();
+    regs_cop->ttbr1 = read_ttbr1();
+    regs_cop->ttbcr = read_ttbcr();
+    regs_cop->sctlr = read_sctlr();
+}
 enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
 {
     int32_t vdev_num = -1;
@@ -179,6 +188,21 @@ enum hyp_hvc_result _hyp_hvc_service(struct arch_regs *regs)
         break;
     case TRAP_EC_NON_ZERO_HVC:
         level = VDEV_LEVEL_MIDDLE;
+
+        int t = read_cntv_tval();
+        printH("hvc time: %d",t);
+        static struct guest_struct *target;
+        target = get_guest_pointer(0);
+        context_save_cops(&target->context.regs_cop);
+	    int HVC_TRAP = 0xe3a03001;
+	    readl((uint32_t)va_to_pa(0, 0x8000ed04, target->context.regs_cop.ttbr0));
+//    	    int data = readl((uint32_t)va_to_pa(cur_vm_number, 0x8000ef04, target->context.regs_cop.ttbr0));
+	    writel(HVC_TRAP, (uint32_t)va_to_pa(0, 0x8000ed04, target->context.regs_cop.ttbr0));
+	    flush_cache((uint32_t)va_to_pa(0, 0x8000ed04, target->context.regs_cop.ttbr0), sizeof(uint32_t));
+	    invalidate_icache_all();
+	    regs->pc = regs->pc + 4;
+	    return HYP_RESULT_ERET;
+
         break;
     case TRAP_EC_NON_ZERO_DATA_ABORT_FROM_OTHER_MODE:
         level = VDEV_LEVEL_LOW;

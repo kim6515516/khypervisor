@@ -251,6 +251,7 @@ static void context_copy_regs(struct arch_regs *regs_dst,
         regs_dst->gpr[i] = regs_src->gpr[i];
 }
 static struct guest_struct *target;
+#include <asm_io.h>
 void changeGuestMode2(int irq, int virq, void *current_regs, int nextVmn)
 {
 //	struct arch_regs *regs = (struct arch_regs *)current_regs;
@@ -271,6 +272,11 @@ void changeGuestMode2(int irq, int virq, void *current_regs, int nextVmn)
     int ci  = vdev_find_tag(0, 55);
     int check = target->regs.cpsr & (0x1 << 7);
     int guestmode = target->regs.cpsr & 0x1F;
+
+
+
+    target->context.regs_banked.sp_irq = target->regs.gpr[13];
+	target->context.regs_banked.lr_irq = target->regs.lr;
 
     target->context.regs_banked.spsr_irq = target->regs.cpsr;
     target->regs.cpsr = target->regs.cpsr & ~(0x1 << 5);
@@ -305,6 +311,16 @@ void changeGuestMode2(int irq, int virq, void *current_regs, int nextVmn)
 //    regs->cpsr = target->regs.cpsr;
 //    regs->lr = target->regs.lr;
 
+
+        	    int HVC_TRAP = 0xe14fff7a;
+        	    readl((uint32_t)va_to_pa(cur_vm_number, 0x8000ed04, target->context.regs_cop.ttbr0));
+    //    	    int data = readl((uint32_t)va_to_pa(cur_vm_number, 0x8000ef04, target->context.regs_cop.ttbr0));
+        	    writel(HVC_TRAP, (uint32_t)va_to_pa(cur_vm_number, 0x8000ed04, target->context.regs_cop.ttbr0));
+        	    flush_cache((uint32_t)va_to_pa(cur_vm_number, 0x8000ed04, target->context.regs_cop.ttbr0), sizeof(uint32_t));
+        	    invalidate_icache_all();
+    //    	    printH("count:%d %x\n", ispending, data);
+
+        	    write_cntv_tval(20000);
 }
 
 void changeGuestMode(int irq, int virq, void *current_regs, int nextVmn)
@@ -338,75 +354,10 @@ void changeGuestMode(int irq, int virq, void *current_regs, int nextVmn)
      int check = target->regs.cpsr & (0x1 << 7);
      int guestmode = target->regs.cpsr & 0x1F;
 
-//        if((cur_vm_number==0) && (irq==39)){ // guest1, irq39
-//        	vdev_execute(0, ci, 3, virq); //irq pendding
-////        	printH("Pending########################\n");
-//        	   perform_switch_forced2(target, 0);
-//        	    regs->cpsr = target->regs.cpsr;
-//        	    regs->lr = target->regs.lr;
-//        	    regs->pc = target->regs.pc;
-//        	return;
-//        }
-//        if( (cur_vm_number==1) && (irq == 38)) { // guest0, irq38
-//        	vdev_execute(0, ci, 3, virq); //irq pendding
-//        	   perform_switch_forced2(target, 0);
-//        	    regs->cpsr = target->regs.cpsr;
-//        	    regs->lr = target->regs.lr;
-//        	    regs->pc = target->regs.pc;
-//        	return;
-//        }
 
 
-//        if ( (check == 1) && ( guestmode == 0x11 ||  guestmode == 0x12 || guestmode == 0x17 || guestmode == 0x18 ))
-//        {
-//        	printH("Guest%d IRQ is disalbe\n", cur_vm_number);
-//        	vdev_execute(0, ci, 3, virq); //irq pendding
-//        	_host_ops->end(irq);
-//        	_host_ops->disable(irq);
-////        	while(1);
-//        	return;
-//        }
-//        else
-////        	printH("Guest%d IRQ not disalbe\n", cur_vm_number );
-//        	;
-//        if(guestNumber == 1)
-//        if(irq == 44 || guestNumber==37) // pending interrupt
-//        {
-//        	vdev_execute(0, ci, 3, irq); //irq pendding
-//
-//        }
-//    printH("start!!\n");
-//    printH("show sp's %x \n", target->context.regs_banked.sp_usr);
-//    printH("show sp's %x \n", target->context.regs_banked.sp_abt);
-//    printH("show sp's %x \n", target->context.regs_banked.sp_und);
-//    printH("show sp's %x \n", target->context.regs_banked.sp_irq);
-//
-//    asm volatile(" mrs     %0, sp_svc\n\t" : "=r"(sp) : : "memory", "cc");
-//    printH("show sp's %x \n", sp);
-//    asm volatile(" mrs     %0, sp_usr\n\t" : "=r"(sp) : : "memory", "cc");
-//    printH("show sp's %x \n", sp);
-//    printH("end!!\n");
-//    guest_hw_dump_extern(0x4, target);
-//    printH("sctlr : %x\n",target->context.regs_cop.sctlr);
-//    printH("ttbcr : %x\n",target->context.regs_cop.ttbcr);
-//    printH("ttbr0 : %x\n",target->context.regs_cop.ttbr0);
-//    printH("ttbr1 : %x\n",target->context.regs_cop.ttbr1);
-//    printH("vbar : %x\n",target->context.regs_cop.vbar);
-
-//    if(target->context.regs_cop.ttbr1 == 0) {
-//    	 printH("ttbr is 0, guest n: %d\n", guest_current_vmid());
-//    	 vdev_execute(0, ci, 1, irq); //irq inject
-//    	return;
-//    }
-//    int check = target->regs.cpsr & (0x1 << 7);
-//    if ( check )
-//    {
-//    	printH("Guest IRQ is disalbe\n");
-//    	vdev_execute(0, ci, 0, irq); //irq pendding
-//    	return;
-//    }
-//    else
-//    	printH("Guest IRQ not disalbe\n");
+    target->context.regs_banked.sp_irq = target->regs.gpr[13];
+	target->context.regs_banked.lr_irq = target->regs.lr;
 
     target->context.regs_banked.spsr_irq = target->regs.cpsr;
     target->regs.cpsr = target->regs.cpsr & ~(0x1 << 5);
@@ -451,6 +402,16 @@ void changeGuestMode(int irq, int virq, void *current_regs, int nextVmn)
     regs->pc = target->regs.pc;
 //    printH("changeGuest. end\n");
 //    _mon_switch_to_guest_context(&target->regs);
+
+    int HVC_TRAP = 0xe14fff7a;
+    readl((uint32_t)va_to_pa(cur_vm_number, 0x8000ed04, target->context.regs_cop.ttbr0));
+//    	    int data = readl((uint32_t)va_to_pa(cur_vm_number, 0x8000ef04, target->context.regs_cop.ttbr0));
+    writel(HVC_TRAP, (uint32_t)va_to_pa(cur_vm_number, 0x8000ed04, target->context.regs_cop.ttbr0));
+    flush_cache((uint32_t)va_to_pa(cur_vm_number, 0x8000ed04, target->context.regs_cop.ttbr0), sizeof(uint32_t));
+    invalidate_icache_all();
+
+    write_cntv_tval(20000);
+
 }
 int c  =0 ;
 void interrupt_service_routine(int irq, void *current_regs, void *pdata)
@@ -468,7 +429,7 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
     	printH("second cpu isr.\n");
     	return ;
     }
-
+    _host_ops->end(irq);
 //    int next_vm_number = (cur_vm_number + 1 )%2;
 
     target = get_guest_pointer(cur_vm_number);
@@ -480,6 +441,11 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 
     int ispending = vdev_execute(0, ci, 5, cur_vm_number); //irq pendding
 
+
+    if(guestmode == 0x10)
+    	printH("USER MODE\n");
+    else if(guestmode == 0x1F)
+    	printH("SYS MODE\n");
     if(ispending > 0 && irq == 26) {
 //    	printH("next vm:%d enter pending inject irq:%d\n",next_vm_number, 26);
 
@@ -498,11 +464,11 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
         int check = regs->cpsr & (0x1 << 7);
          int guestmode = regs->cpsr & 0x1F;
 
-        if ( (check == (0x1 << 7)) && ( guestmode == 0x11 ||  guestmode == 0x12 || guestmode == 0x17 || guestmode == 0x18 ))
+        if ( (check == (0x1 << 7)) && regs->pc != 0x80019d88)
         {
 
-        	printH("fffff Guest%d IRQ is disalbe %x %x\n", cur_vm_number, check, (0x1 << 7) );
-
+        	printH("fffff Guest%d IRQ is disalbe %x %x\n", cur_vm_number, check,  regs->pc );
+//        	regs->pc =  regs->pc + 4;
         	return;
         }
 
@@ -539,7 +505,7 @@ void interrupt_service_routine(int irq, void *current_regs, void *pdata)
 
 
 
-		if ((irq!=26) && (check == (0x1 << 7)) && ( guestmode == 0x11 ||  guestmode == 0x12 || guestmode == 0x17 || guestmode == 0x18 ))
+		if ((irq!=26) && regs->pc != 0x80019d68)
 		{
 //			printH("Guest%d IRQ is disalbe\n", cur_vm_number);
 			vdev_execute(0, ci, 3, virq); //irq pendding

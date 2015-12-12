@@ -417,9 +417,20 @@ void setup_memory()
  *
  *  @note "Cortex™-A15 Technical Reference Manual", 8.2.3 Interrupt sources
  */
+#define GENERIC_TIMER_CTRL_ENABLE       (1 << 0)
+#define GENERIC_TIMER_CTRL_IMASK        (1 << 1)
+#define GENERIC_TIMER_CTRL_ISTATUS      (1 << 2)
 void setup_timer()
 {
     _timer_irq = 26; /* GENERIC_TIMER_HYP */
+
+    uint32_t ctrl;
+
+        ctrl = read_cntv_ctl();
+        ctrl |= GENERIC_TIMER_CTRL_ENABLE;
+//        ctrl &= ~GENERIC_TIMER_CTRL_IMASK;
+        write_cntv_ctl(ctrl);
+
 }
 
 uint8_t secondary_smp_pen;

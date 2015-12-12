@@ -272,7 +272,8 @@ static hvmm_status_t vdev_cpu_interface_access_handler(uint32_t write, uint32_t 
         if (offset == GIC_OFFSET_GICC_IAR) {
         	*pvalue = ci_regs[vmid].GICC_IAR;
 //        	if( vmid == 1)
-//   		printH("vm: %d read iar: GICC_IAR %d\n", vmid, *pvalue);
+        	printH("vm: %d read iar: GICC_IAR %d\n", vmid, *pvalue);
+        	ci_regs[vmid].GICC_IAR = 1023;
         }
 //    	printH("1111111111111 %x\n", *pvalue);
        } else {
@@ -283,33 +284,14 @@ static hvmm_status_t vdev_cpu_interface_access_handler(uint32_t write, uint32_t 
 //       		printH("vm:%d write eoir : ci_regs[0].GICC_IAR = 0x000003FF  %d\n",vmid, *pvalue);
 
         		ci_regs[vmid].GICC_IAR = 0x000003FF ;
-//        		ci_regs[0].GICC_IAR = *pvalue ;
-//        		if (*pvalue == 37) {
-//        			if(vmid == 0)
-//        				*addr = 38;
-//        			if(vmid ==1)
-//        				*addr = 39;
-//        		} else if ( *pvalue == 34){
-//        			if(vmid == 0)
-//        				*addr = 34;
-//        			if(vmid ==1)
-//        				*addr = 35;
-//
-//        		}else
-        			*addr = *pvalue;
 
-//        		int pirq = interrupt_virq_to_pirq(vmid, *pvalue);
-//        		if(pirq != PIRQ_INVALID)
-//        			*addr = pirq;
-//        		else
-//        			*addr = *pvalue;
-//        		*daddr = *pvalue;
-//                int *dir = 0x2c001000;
-//                *dir = *pvalue;
+        		//*addr = *pvalue;
+
+
 
         	}
         	else
-        		*addr = *pvalue;
+        		; //*addr = *pvalue;
 
 //        	ci_regs[0].GICC_IAR = (*((volatile unsigned int*) (CPU_INTERFACE_BASE_ADDR + offset)));
 
@@ -513,7 +495,7 @@ static hvmm_status_t vdev_cpu_interface_execute(int level, int num, int type, in
 	} else if (type == 5) {
 		vmn = irq;
 //		return countPending[vmn];
-//		print_queue(vmn);
+		print_queue(vmn);
 		return is_get(vmn);
 
 	} else if (type == 6) {

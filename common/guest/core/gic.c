@@ -137,18 +137,18 @@ static hvmm_status_t gic_init_baseaddr(uint32_t *va_base)
      * Other architectures with GICv2 support will be further
      * listed and added for support later.
      */
-    if ((midr & MIDR_MASK_PPN) == MIDR_PPN_CORTEXA15) {
+//    if ((midr & MIDR_MASK_PPN) == MIDR_PPN_CORTEXA15) {
         _gic.baseaddr = (uint32_t) va_base;
         _gic.ba_gicd = (uint32_t *)(_gic.baseaddr + GIC_OFFSET_GICD);
         _gic.ba_gicc = (uint32_t *)(_gic.baseaddr + GIC_OFFSET_GICC);
         result = HVMM_STATUS_SUCCESS;
-    } else {
-        uart_print("GICv2 Unsupported\n\r");
-        uart_print("midr.ppn:");
-        uart_print_hex32(midr & MIDR_MASK_PPN);
-        uart_print("\n\r");
-        result = HVMM_STATUS_UNSUPPORTED_FEATURE;
-    }
+//    } else {
+//        uart_print("GICv2 Unsupported\n\r");
+//        uart_print("midr.ppn:");
+//        uart_print_hex32(midr & MIDR_MASK_PPN);
+//        uart_print("\n\r");
+//        result = HVMM_STATUS_UNSUPPORTED_FEATURE;
+//    }
     HVMM_TRACE_EXIT();
     return result;
 }
